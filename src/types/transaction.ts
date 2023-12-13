@@ -6,11 +6,12 @@ export const SimpleTransactionSchema = z.object({
     id: z.string().or(z.number()),
     description: z.string(),
     amount: z.number(),
+    currency: z.string(),
     isIncome: z.boolean(),
 });
 
 export const TransactionSchema = SimpleTransactionSchema.extend({
-    date: z.string(),
+    date: z.date(),
     tags: TagsSchema,
 });
 

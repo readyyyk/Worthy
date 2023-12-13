@@ -22,10 +22,14 @@ interface DataTableProps<TData, TValue> {
 function DataTable<TData, TValue>({
     columns,
     data,
-}: DataTableProps<TData, TValue>) {
+    columnVisibility,
+}: DataTableProps<TData, TValue> & {
+    columnVisibility: Record<string, boolean>;
+}) {
     const table = useReactTable({
         data,
         columns,
+        state: { columnVisibility },
         getCoreRowModel: getCoreRowModel(),
     });
     return (

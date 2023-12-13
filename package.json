@@ -3,24 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@nivo/line": "^0.84.0",
     "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@tanstack/react-table": "^8.10.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.294.0",
+    "moment": "^2.29.4",
     "next": "14.0.4",
     "next-auth": "^4.24.5",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^2.10.3",
     "tailwind-merge": "^2.1.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4"

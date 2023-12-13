@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import AuthProvider from '@/components/AuthProvider';
+import Header from '@/components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,11 +18,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <html lang="en" className={'dark'}>
             <body
                 className={cn(
-                    'min-h-screen bg-background font-sans antialiased',
+                    'min-h-screen bg-background font-sans antialiased overflow-x-hidden px-4 relative',
                     inter.className,
                 )}
             >
-                <AuthProvider>{children}</AuthProvider>
+                <Header />
+                {/*<AuthProvider>*/}
+                {children}
+                {/*</AuthProvider>*/}
             </body>
         </html>
     );

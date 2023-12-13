@@ -2,8 +2,14 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Transaction } from '@/types/transaction';
-import { MinusIcon, PlusIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import moment from 'moment';
+import { formatCurrency } from '@/lib/utils';
+
+export const columnVisibility: Readonly<Record<string, boolean>> = {
+    isIncome: false,
+    currency: false,
+};
 
 export const columns: ColumnDef<Transaction>[] = [
     {
@@ -11,42 +17,52 @@ export const columns: ColumnDef<Transaction>[] = [
         header: 'ID',
     },
     {
+        accessorKey: 'currency',
+        header: 'Currency',
+    },
+    {
         accessorKey: 'isIncome',
         header: '+/-',
-        cell: (cell) =>
-            cell.getValue() ? (
-                <PlusIcon className={'h-4 w-4 text-green-500'} />
-            ) : (
-                <MinusIcon className={'h-4 w-4 text-red-500'} />
-            ),
     },
     {
         accessorKey: 'amount',
-        cell: ({ cell, row }) =>
-            row.getValue('isIncome') ? (
-                <span className={'text-green-500 text-lg'}>
-                    +{String(cell.getValue())}
-                </span>
-            ) : (
-                <span className={'text-red-500 text-lg'}>
-                    -{String(cell.getValue())}
-                </span>
-            ),
+        cell: ({ cell, row }) => {
+            const formatted = formatCurrency(
+                Number(cell.getValue()),
+                row.getValue('currency'),
+            );
+            return (
+                <div
+                    className={
+                        (row.getValue('isIncome')
+                            ? 'text-green-500'
+                            : 'text-red-500') + ' whitespace-nowrap text-lg'
+                    }
+                >
+                    {row.getValue('isIncome') ? '+' : '-'}
+                    {formatted}
+                </div>
+            );
+        },
         header: 'Amount',
     },
     {
         accessorKey: 'date',
         header: 'Date',
         cell: (cell) => (
-            <span className={'whitespace-nowrap'}>
-                {String(cell.getValue())}
-            </span>
+            <div className={'w-20'}>
+                {String(
+                    moment(new Date(cell.getValue()!.toString())).format(
+                        'DD-MM-YYYY HH:mm',
+                    ),
+                )}
+            </div>
         ),
     },
     {
         accessorKey: 'tags',
         header: 'Tags',
-        cell: ({ cell, row }) => (
+        cell: ({ cell }) => (
             <div className={'flex flex-wrap w-32 gap-1'}>
                 {String(cell.getValue())
                     .split(',')
@@ -64,7 +80,7 @@ export const columns: ColumnDef<Transaction>[] = [
     {
         accessorKey: 'description',
         header: 'Description',
-        cell: ({ cell, row }) => (
+        cell: ({ cell }) => (
             <div className={'w-44'}>{String(cell.getValue())}</div>
         ),
     },

@@ -1,8 +1,7 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import LineChart from '@/components/LineChart';
 import {
     Select,
     SelectContent,
@@ -11,19 +10,85 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Data } from '@/types/chart';
+import {
+    BarChart,
+    Bar,
+    Rectangle,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    TooltipProps,
+} from 'recharts';
 
 import { data as mockData } from '@/assets/mockData';
+import { Data } from '@/types/chart';
 
-type Props = {};
+const CustomTooltip: FC<TooltipProps<number, ''>> = ({
+    active,
+    payload,
+    label: date,
+}) => {
+    const label = `${date?.getDay()}.${date?.getMonth()} at ${date?.getHours()}`;
 
-const Chart: FC<Props> = ({}) => {
-    const [data, setData] = useState<Data>(mockData);
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-background rounded-md p-3 shadow-md shadow-gray-500">
+                date: {label} <br /> spent: {payload[0].value}
+            </div>
+        );
+    }
+
+    return null;
+};
+const Chart: FC = () => {
+    const formatDate = (date: Date, range: number) => {
+        if (range === 0 || range === 1) return `${date.getHours()}`;
+        if (range === 14 || range === 30) return `${date.getDay()}`;
+        return date.toLocaleDateString();
+    };
+    const [data, setData] = useState([] as Data);
     const [range, setRange] = useState(0);
+    useEffect(() => {
+        if (range === 0 || range === 1) {
+            setData(mockData.slice(range ? 1 : 0, 24));
+            return;
+        }
+        setData(mockData.slice(range ? 1 : 0, range));
+    }, [range]);
     return (
-        <Card className="mb-4">
-            <CardContent>
-                <LineChart data={data} className="w-full h-[300px]" />
+        <Card className="mb-4 relative">
+            <CardContent
+                className={'w-[110%] -translate-x-[5%] h-64 mt-6 pb-0'}
+            >
+                <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    className={'relative -left-6'}
+                >
+                    <BarChart
+                        data={data}
+                        margin={{
+                            top: 5,
+                            bottom: 5,
+                        }}
+                        className={'w-full'}
+                    >
+                        <CartesianGrid />
+                        <XAxis
+                            dataKey="date"
+                            tickFormatter={(tick) => formatDate(tick, range)}
+                        />
+                        <YAxis />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar
+                            dataKey="amount"
+                            fill="red"
+                            activeBar={<Rectangle fill="gold" stroke="red" />}
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
             </CardContent>
             <CardHeader>
                 <CardTitle className="text-lg font-semibold">
