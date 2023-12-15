@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const TagsSchema = z.array(z.string());
 
 export const SimpleTransactionSchema = z.object({
-    id: z.string().or(z.number()),
+    id: z.number(),
+    ownerId: z.number(),
     description: z.string(),
     amount: z.number(),
     currency: z.string(),
