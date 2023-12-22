@@ -1,5 +1,6 @@
 import { type Data } from '@/types/chart';
 import { type Transaction } from '@/types/transaction';
+import { addHours, compareAsc, compareDesc } from 'date-fns';
 
 const r = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min + 1) + min);
@@ -8,133 +9,10 @@ export const primaryCurrency = 'BYN';
 
 export const balance = 2000;
 
-export const data: Data = [
-    { date: new Date(), amount: r(0, 10) },
-    {
-        date: new Date(new Date().getTime() + 1000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 2000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 3000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 4000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 5000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 6000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 7000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 8000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 9000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 10000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 11000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 12000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 13000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 14000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 15000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 16000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 17000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 18000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 19000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 20000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 21000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 22000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 23000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 24000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 25000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 26000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 27000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 28000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 29000 * 60 * 60),
-        amount: r(0, 10),
-    },
-    {
-        date: new Date(new Date().getTime() + 30000 * 60 * 60),
-        amount: r(0, 10),
-    },
-];
-
 export const mockTransactions: Transaction[] = [
     {
-        id: '1',
+        id: 1,
+        ownerId: 1,
         description: 'Received Salary',
         amount: 1000,
         currency: 'BYN',
@@ -143,7 +21,8 @@ export const mockTransactions: Transaction[] = [
         tags: ['Income', 'Work'],
     },
     {
-        id: '2',
+        id: 2,
+        ownerId: 1,
         description: 'Grocery Shopping at Local Mart',
         amount: 150,
         currency: 'BYN',
@@ -152,7 +31,8 @@ export const mockTransactions: Transaction[] = [
         tags: ['Groceries', 'Shopping'],
     },
     {
-        id: '3',
+        id: 3,
+        ownerId: 1,
         description: 'Dinner at Italian Restaurant',
         amount: 200,
         currency: 'BYN',
@@ -161,7 +41,8 @@ export const mockTransactions: Transaction[] = [
         tags: ['Dining Out', 'Entertainment'],
     },
     {
-        id: '4',
+        id: 4,
+        ownerId: 1,
         description: 'Freelance Web Development Project',
         amount: 300,
         currency: 'USD',
@@ -170,7 +51,8 @@ export const mockTransactions: Transaction[] = [
         tags: ['Freelance', 'Income', 'Work'],
     },
     {
-        id: '5',
+        id: 5,
+        ownerId: 1,
         description: 'Investment in Stock Market',
         amount: 500,
         currency: 'BYN',
@@ -179,7 +61,8 @@ export const mockTransactions: Transaction[] = [
         tags: ['Investment', 'Finance'],
     },
     {
-        id: '6',
+        id: 6,
+        ownerId: 1,
         description: 'Payment for Monthly Utilities',
         amount: 50,
         currency: 'EUR',
@@ -187,4 +70,34 @@ export const mockTransactions: Transaction[] = [
         date: new Date('2022-09-01 17:37:20'),
         tags: ['Utilities', 'Bills'],
     },
-];
+    {
+        id: 7,
+        ownerId: 1,
+        description: 'Payment for Monthly Utilities',
+        amount: 28,
+        currency: 'BYN',
+        isIncome: false,
+        date: new Date(),
+        tags: ['monthly'],
+    },
+    {
+        id: 8,
+        ownerId: 1,
+        description: 'Tutoring',
+        amount: 30,
+        currency: 'BYN',
+        isIncome: true,
+        date: addHours(new Date(), -2),
+        tags: ['work'],
+    },
+    {
+        id: 8,
+        ownerId: 1,
+        description: 'Vocations',
+        amount: 400,
+        currency: 'BYN',
+        isIncome: false,
+        date: addHours(new Date(), -8),
+        tags: ['rest'],
+    },
+].sort((a, b) => compareDesc(a.date, b.date));

@@ -4,6 +4,7 @@ import './globals.css';
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import Header from '@/components/Header';
+import TRPCProvider from '@/app/_trpc/Provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             >
                 <Header />
                 {/*<AuthProvider>*/}
-                {children}
+                <TRPCProvider>{children}</TRPCProvider>
                 {/*</AuthProvider>*/}
             </body>
         </html>

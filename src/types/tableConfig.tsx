@@ -3,7 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Transaction } from '@/types/transaction';
 import { Badge } from '@/components/ui/badge';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 
 export const columnVisibility: Readonly<Record<string, boolean>> = {
@@ -52,8 +52,9 @@ export const columns: ColumnDef<Transaction>[] = [
         cell: (cell) => (
             <div className={'w-20'}>
                 {String(
-                    moment(new Date(cell.getValue()!.toString())).format(
-                        'DD-MM-YYYY HH:mm',
+                    format(
+                        new Date(cell.getValue()!.toString()),
+                        'dd-MM-yyyy HH:mm',
                     ),
                 )}
             </div>

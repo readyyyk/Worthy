@@ -13,7 +13,7 @@ import {
 import { primaryCurrency } from '@/assets/mockData';
 import currencySymbols from '@/assets/symbols';
 import { Badge } from '@/components/ui/badge';
-import moment from 'moment';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
 interface Props {}
@@ -74,14 +74,14 @@ const Form: FC<Props> = ({}) => {
                     <Input
                         type={'date'}
                         className={'text-center'}
-                        defaultValue={moment().format('YYYY-MM-DD')}
+                        defaultValue={format(new Date(), 'yyyy-MM-dd')}
                     />
                 </Label>
                 <Label>
                     <Input
                         type={'time'}
                         className={'text-center'}
-                        defaultValue={moment().format('hh:mm')}
+                        defaultValue={format(new Date(), 'hh:mm')}
                     />
                 </Label>
             </div>

@@ -1,12 +1,13 @@
 import { FC } from 'react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { balance, primaryCurrency } from '@/assets/mockData';
 import { formatCurrency } from '@/lib/utils';
+import { serverTrpc } from '@/app/_trpc/serverClient';
 
 interface Props {}
 
-const Balance: FC<Props> = ({}) => {
-    const formatted = formatCurrency(balance, primaryCurrency);
+const Balance: FC<Props> = async ({}) => {
+    const { balance, currency } = await serverTrpc.getBalance();
+    const formatted = formatCurrency(balance, currency);
 
     return (
         <Card>

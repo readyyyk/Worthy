@@ -1,15 +1,15 @@
 'use client';
 
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
+/*import {
     Select,
     SelectContent,
     SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select';*/
 import {
     BarChart,
     Bar,
@@ -22,97 +22,129 @@ import {
     TooltipProps,
 } from 'recharts';
 
-import { data as mockData } from '@/assets/mockData';
-import { Data } from '@/types/chart';
+import { Data, DataSerialized, DataSerializedSchema } from '@/types/chart';
+import { trpc } from '@/app/_trpc/trpc';
+import { Transaction } from '@/types/transaction';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    compareDesc,
+    differenceInDays,
+    differenceInWeeks,
+    format,
+} from 'date-fns';
+import { primaryCurrency } from '@/assets/mockData';
+import { formatCurrency } from '@/lib/utils';
+
+const dateToDate = (data: DataSerialized): Data => {
+    return data.map((el) => ({
+        amount: el.amount,
+        date: new Date(el.date),
+    }));
+};
 
 const CustomTooltip: FC<TooltipProps<number, ''>> = ({
     active,
     payload,
     label: date,
 }) => {
-    const label = `${date?.getDay()}.${date?.getMonth()} at ${date?.getHours()}`;
-
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-background rounded-md p-3 shadow-md shadow-gray-500">
-                date: {label} <br /> spent: {payload[0].value}
-            </div>
-        );
+    if (!active || !payload || !payload.length) {
+        return null;
     }
+    const label = format(date, 'dd.MM');
+    const formatted = formatCurrency(payload?.[0].value ?? 0, primaryCurrency);
 
-    return null;
+    return (
+        <div className="bg-background rounded-md p-3 shadow-md shadow-gray-500">
+            date: {label} <br /> spent: {formatted}
+        </div>
+    );
 };
 const Chart: FC = () => {
-    const formatDate = (date: Date, range: number) => {
-        if (range === 0 || range === 1) return `${date.getHours()}`;
-        if (range === 14 || range === 30) return `${date.getDay()}`;
-        return date.toLocaleDateString();
+    const { data } = trpc.getChartData.useQuery({ range: 14 });
+    const formatDate = (date: string, range: number) => {
+        const _date = new Date(date);
+        if (range === 0 || range === 1) return `${_date.getHours()}`;
+        if (range === 14 || range === 30) return `${_date.getDay()}`;
+        return _date.toLocaleDateString();
     };
-    const [data, setData] = useState([] as Data);
-    const [range, setRange] = useState(0);
-    useEffect(() => {
-        if (range === 0 || range === 1) {
-            setData(mockData.slice(range ? 1 : 0, 24));
-            return;
+    const padData = (data: Data, range: number): Data => {
+        const result: Data = [];
+        for (let i = 0; i < range; i++) {
+            result[i] = {
+                date: new Date(new Date().setDate(new Date().getDate() - i)),
+                amount: 0,
+            };
+
+            const existing = data.find(
+                (el) => differenceInDays(new Date(), el.date) === i,
+            );
+            if (existing) {
+                result[i].amount += existing.amount;
+            }
         }
-        setData(mockData.slice(range ? 1 : 0, range));
-    }, [range]);
+        return result.reverse();
+    };
     return (
         <Card className="mb-4 relative">
-            <CardContent
-                className={'w-[110%] -translate-x-[5%] h-64 mt-6 pb-0'}
-            >
-                <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                    className={'relative -left-6'}
-                >
-                    <BarChart
-                        data={data}
-                        margin={{
-                            top: 5,
-                            bottom: 5,
-                        }}
-                        className={'w-full'}
-                    >
-                        <CartesianGrid />
-                        <XAxis
-                            dataKey="date"
-                            tickFormatter={(tick) => formatDate(tick, range)}
-                        />
-                        <YAxis />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar
-                            dataKey="amount"
-                            fill="red"
-                            activeBar={<Rectangle fill="gold" stroke="red" />}
-                        />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
             <CardHeader>
                 <CardTitle className="text-lg font-semibold">
-                    Expenses
+                    Expenses during last 2 weeks:
                 </CardTitle>
-                <Select
-                    onValueChange={(value) => {
-                        setRange(Number(value));
-                    }}
-                    defaultValue={'0'}
-                >
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select a date range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectItem value={'0'}>Today</SelectItem>
-                            <SelectItem value={'1'}>Yesterday</SelectItem>
-                            <SelectItem value={'14'}>Last 2 Weeks</SelectItem>
-                            <SelectItem value={'30'}>Last Month</SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                {/*<Select*/}
+                {/*    onValueChange={(value) => {*/}
+                {/*        setRange(Number(value));*/}
+                {/*    }}*/}
+                {/*    defaultValue={'0'}*/}
+                {/*>*/}
+                {/*    <SelectTrigger className="w-[180px]">*/}
+                {/*        <SelectValue placeholder="Select a date range" />*/}
+                {/*    </SelectTrigger>*/}
+                {/*    <SelectContent>*/}
+                {/*        <SelectGroup>*/}
+                {/*            <SelectItem value={'0'}>Today</SelectItem>*/}
+                {/*            <SelectItem value={'1'}>Yesterday</SelectItem>*/}
+                {/*            <SelectItem value={'14'}>Last 2 Weeks</SelectItem>*/}
+                {/*            <SelectItem value={'30'}>Last Month</SelectItem>*/}
+                {/*        </SelectGroup>*/}
+                {/*    </SelectContent>*/}
+                {/*</Select>*/}
             </CardHeader>
+
+            {data ? (
+                <CardContent className={'w-[110%] -translate-x-[5%] h-64 pb-0'}>
+                    <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                        className={'relative -left-6'}
+                    >
+                        <BarChart
+                            data={padData(dateToDate(data), 31)}
+                            margin={{
+                                top: 5,
+                                bottom: 5,
+                            }}
+                            className={'w-full'}
+                        >
+                            <CartesianGrid />
+                            <XAxis
+                                dataKey="date"
+                                tickFormatter={(tick) => formatDate(tick, 14)}
+                            />
+                            <YAxis />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar
+                                dataKey="amount"
+                                fill="red"
+                                activeBar={
+                                    <Rectangle fill="gold" stroke="red" />
+                                }
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            ) : (
+                <Skeleton className={'w-full h-64'} />
+            )}
         </Card>
     );
 };

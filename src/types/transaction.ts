@@ -1,20 +1,32 @@
 import { z } from 'zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { table_transactions } from '@/db/schemas';
+import transactions from '@/app/Transactions';
 
-export const TagsSchema = z.array(z.string());
+/*
+{
+    id: z.ZodNumber,
+    date: z.ZodOptional<z.ZodDate>,
+    ownerId: z.ZodNumber,
+    description: z.ZodString,
+    amount: z.ZodNumber,
+    currency: z.ZodString,
+    isIncome: z.ZodBoolean,
+    tags: z.ZodOptional<z.ZodString>,
+}
+*/
 
-export const SimpleTransactionSchema = z.object({
-    id: z.number(),
-    ownerId: z.number(),
-    description: z.string(),
-    amount: z.number(),
-    currency: z.string(),
-    isIncome: z.boolean(),
+export const TransactionSchema = createSelectSchema(table_transactions, {
+    tags: z.array(z.string()).optional(),
+});
+export const SerializedTransactionSchema = TransactionSchema.setKey(
+    'date',
+    z.string(),
+);
+export const InsertTransactionSchema = createInsertSchema(table_transactions, {
+    id: z.null(),
 });
 
-export const TransactionSchema = SimpleTransactionSchema.extend({
-    date: z.date(),
-    tags: TagsSchema,
-});
-
-export type SimpleTransaction = z.infer<typeof SimpleTransactionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
+export type InsertTransaction = z.infer<typeof InsertTransactionSchema>;
+export type SerializedTransaction = z.infer<typeof SerializedTransactionSchema>;

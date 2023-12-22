@@ -6,12 +6,12 @@ import {
     boolean,
     smallint,
     timestamp,
-    smallserial,
+    serial,
 } from 'drizzle-orm/pg-core';
 
 /* Tables */
 export const table_users = pgTable('users', {
-    id: smallserial('id').primaryKey(),
+    id: serial('id').primaryKey(),
     username: varchar('username', { length: 64 }).notNull().unique(),
     password: text('password').notNull(),
     registeredAt: timestamp('created_at').defaultNow().notNull(),
@@ -20,7 +20,7 @@ export const table_users = pgTable('users', {
 });
 
 export const table_transactions = pgTable('transactions', {
-    id: smallserial('id').primaryKey(),
+    id: serial('id').primaryKey(),
     ownerId: smallint('owner_id')
         .notNull()
         .references(() => table_users.id),
@@ -29,5 +29,5 @@ export const table_transactions = pgTable('transactions', {
     currency: varchar('currency', { length: 3 }).notNull(),
     isIncome: boolean('is_income').notNull(),
     date: timestamp('date').defaultNow().notNull(),
-    tags: varchar('tags', { length: 64 }).array().notNull(),
+    tags: varchar('tags', { length: 64 }).array(),
 });

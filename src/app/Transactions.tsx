@@ -1,13 +1,13 @@
 import { FC } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { SimpleTransaction } from '@/types/transaction';
-import { mockTransactions } from '@/assets/mockData';
+import { Transaction } from '@/types/transaction';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { serverTrpc } from '@/app/_trpc/serverClient';
 
-type SingleProps = SimpleTransaction;
+type SingleProps = Transaction;
 const Single: FC<SingleProps> = ({
     description,
     amount,
@@ -29,9 +29,8 @@ const Single: FC<SingleProps> = ({
 };
 
 interface Props {}
-const Transactions: FC<Props> = ({}) => {
-    // 3 latest transactions
-    const data: SimpleTransaction[] = mockTransactions.slice(0, 3);
+const Transactions: FC<Props> = async ({}) => {
+    const data = await serverTrpc.getRecentTransactions();
 
     return (
         <Card className="mt-4">
