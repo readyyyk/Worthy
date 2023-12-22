@@ -1,9 +1,12 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Transaction } from '@/types/transaction';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+
+import { Transaction } from '@/types/transaction';
+
+import { Badge } from '@/components/ui/badge';
+
 import { formatCurrency } from '@/lib/utils';
 
 export const columnVisibility: Readonly<Record<string, boolean>> = {
@@ -64,7 +67,7 @@ export const columns: ColumnDef<Transaction>[] = [
         accessorKey: 'tags',
         header: 'Tags',
         cell: ({ cell }) => (
-            <div className={'flex flex-wrap w-32 gap-1'}>
+            <div className={'flex w-32 flex-wrap gap-1'}>
                 {String(cell.getValue())
                     .split(',')
                     .map((el) => (

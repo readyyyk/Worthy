@@ -1,12 +1,12 @@
 import {
-    text,
-    varchar,
-    pgTable,
-    integer,
     boolean,
-    smallint,
-    timestamp,
+    integer,
+    pgTable,
     serial,
+    smallint,
+    text,
+    timestamp,
+    varchar,
 } from 'drizzle-orm/pg-core';
 
 /* Tables */

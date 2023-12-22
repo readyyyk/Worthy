@@ -1,10 +1,13 @@
+import { ReactNode } from 'react';
+
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
-import { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import Header from '@/components/Header';
+
 import TRPCProvider from '@/app/_trpc/Provider';
+import Header from '@/components/Header';
+import { cn } from '@/lib/utils';
+
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <html lang="en" className={'dark'}>
             <body
                 className={cn(
-                    'min-h-screen bg-background font-sans antialiased overflow-x-hidden px-4 relative',
+                    'relative min-h-screen overflow-x-hidden bg-background px-4 font-sans antialiased',
                     inter.className,
                 )}
             >

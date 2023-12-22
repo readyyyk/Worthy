@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { TransactionSchema } from '@/types/transaction';
 
 export const DataItem = TransactionSchema.pick({ amount: true, date: true });

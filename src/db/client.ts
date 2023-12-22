@@ -1,6 +1,7 @@
+import { createPool } from '@vercel/postgres';
 import env from 'dotenv';
 import { drizzle } from 'drizzle-orm/vercel-postgres';
-import { createPool } from '@vercel/postgres';
+
 import * as schema from './schemas';
 
 env.config();

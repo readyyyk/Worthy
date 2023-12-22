@@ -1,4 +1,5 @@
 import { migrate } from 'drizzle-orm/vercel-postgres/migrator';
+
 import { db } from '@/db/client';
 
 (async () => {

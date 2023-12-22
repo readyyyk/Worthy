@@ -1,6 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { table_users } from '@/db/schemas';
 import { z } from 'zod';
+
+import { table_users } from '@/db/schemas';
 
 /*
 {

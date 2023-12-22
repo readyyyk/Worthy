@@ -1,6 +1,7 @@
+import { addHours, compareAsc, compareDesc } from 'date-fns';
+
 import { type Data } from '@/types/chart';
 import { type Transaction } from '@/types/transaction';
-import { addHours, compareAsc, compareDesc } from 'date-fns';
 
 const r = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min + 1) + min);

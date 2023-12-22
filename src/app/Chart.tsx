@@ -1,7 +1,14 @@
 'use client';
 
 import { FC } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import {
+    compareDesc,
+    differenceInDays,
+    differenceInWeeks,
+    format,
+} from 'date-fns';
+
 /*import {
     Select,
     SelectContent,
@@ -11,27 +18,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
     SelectValue,
 } from '@/components/ui/select';*/
 import {
-    BarChart,
     Bar,
+    BarChart,
+    CartesianGrid,
     Rectangle,
+    ResponsiveContainer,
+    Tooltip,
+    TooltipProps,
     XAxis,
     YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    TooltipProps,
 } from 'recharts';
 
 import { Data, DataSerialized, DataSerializedSchema } from '@/types/chart';
-import { trpc } from '@/app/_trpc/trpc';
 import { Transaction } from '@/types/transaction';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-    compareDesc,
-    differenceInDays,
-    differenceInWeeks,
-    format,
-} from 'date-fns';
+
+import { trpc } from '@/app/_trpc/trpc';
 import { primaryCurrency } from '@/assets/mockData';
 import { formatCurrency } from '@/lib/utils';
 
@@ -54,7 +58,7 @@ const CustomTooltip: FC<TooltipProps<number, ''>> = ({
     const formatted = formatCurrency(payload?.[0].value ?? 0, primaryCurrency);
 
     return (
-        <div className="bg-background rounded-md p-3 shadow-md shadow-gray-500">
+        <div className="rounded-md bg-background p-3 shadow-md shadow-gray-500">
             date: {label} <br /> spent: {formatted}
         </div>
     );
@@ -85,7 +89,7 @@ const Chart: FC = () => {
         return result.reverse();
     };
     return (
-        <Card className="mb-4 relative">
+        <Card className="relative mb-4">
             <CardHeader>
                 <CardTitle className="text-lg font-semibold">
                     Expenses during last 2 weeks:
@@ -111,7 +115,7 @@ const Chart: FC = () => {
             </CardHeader>
 
             {data ? (
-                <CardContent className={'w-[110%] -translate-x-[5%] h-64 pb-0'}>
+                <CardContent className={'h-64 w-[110%] -translate-x-[5%] pb-0'}>
                     <ResponsiveContainer
                         width="100%"
                         height="100%"
@@ -143,7 +147,7 @@ const Chart: FC = () => {
                     </ResponsiveContainer>
                 </CardContent>
             ) : (
-                <Skeleton className={'w-full h-64'} />
+                <Skeleton className={'h-64 w-full'} />
             )}
         </Card>
     );

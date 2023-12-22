@@ -1,8 +1,13 @@
 'use client';
 
 import { FC, useState } from 'react';
-import { Label } from '@/components/ui/label';
+
+import { format } from 'date-fns';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -10,11 +15,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+
 import { primaryCurrency } from '@/assets/mockData';
 import currencySymbols from '@/assets/symbols';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
 
 interface Props {}
 
@@ -40,7 +43,7 @@ const Form: FC<Props> = ({}) => {
             className={'flex flex-col space-y-3'}
         >
             {/* Amount */}
-            <div className={'grid gap-3 grid-cols-2'}>
+            <div className={'grid grid-cols-2 gap-3'}>
                 <Label>
                     <Input
                         value={amountInput}
@@ -69,7 +72,7 @@ const Form: FC<Props> = ({}) => {
                 <Input placeholder={'Description'} />
             </Label>
 
-            <div className={'gap-3 grid grid-cols-2'}>
+            <div className={'grid grid-cols-2 gap-3'}>
                 <Label>
                     <Input
                         type={'date'}
@@ -87,7 +90,7 @@ const Form: FC<Props> = ({}) => {
             </div>
 
             {/* Tags */}
-            <div className={'flex flex-wrap gap-2 items-baseline'}>
+            <div className={'flex flex-wrap items-baseline gap-2'}>
                 {tags.map((el, i) => (
                     <Badge
                         key={`tag-${el}-${i}`}
@@ -105,7 +108,7 @@ const Form: FC<Props> = ({}) => {
                         e.key === 'Enter' && handleTags(tagsInputValue + ' ')
                     }
                     placeholder={'tag'}
-                    className={'w-24 p-2 h-8'}
+                    className={'h-8 w-24 p-2'}
                 />
                 {!tags.length && (
                     <span className={'text-gray-600'}>
@@ -114,7 +117,7 @@ const Form: FC<Props> = ({}) => {
                 )}
             </div>
 
-            <div className={'pt-3 w-1/2 m-auto'}>
+            <div className={'m-auto w-1/2 pt-3'}>
                 <Button type={'submit'} className={'w-full'}>
                     Submit
                 </Button>

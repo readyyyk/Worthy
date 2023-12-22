@@ -1,8 +1,11 @@
 'use client';
 
 import { FC } from 'react';
+
 import { redirect, useSearchParams } from 'next/navigation';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import Form from '@/app/new/form';
 
 interface Props {}
@@ -18,7 +21,7 @@ const Page: FC<Props> = ({}) => {
     if (isIncome === null) redirect('/');
 
     return (
-        <Card className={'w-full z-20'}>
+        <Card className={'z-20 w-full'}>
             <CardHeader>
                 <CardTitle className={'text-center text-4xl'}>
                     New {isIncome ? 'income' : 'expense'}

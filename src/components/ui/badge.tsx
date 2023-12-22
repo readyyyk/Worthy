@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
+
+import { type VariantProps, cva } from 'class-variance-authority';
+import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { XIcon } from 'lucide-react';
 
 const badgeVariants = cva(
     'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 h-fit',
@@ -41,13 +42,13 @@ function Badge({
         <div
             className={cn(
                 badgeVariants({ variant }),
-                removable && 'text-sm ps-1',
+                removable && 'ps-1 text-sm',
                 className,
             )}
             {...props}
         >
             {removable && (
-                <XIcon className={'bg-slate-500 rounded-full h-4 w-fit mr-1'} />
+                <XIcon className={'mr-1 h-4 w-fit rounded-full bg-slate-500'} />
             )}
             {children}
         </div>

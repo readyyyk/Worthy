@@ -1,5 +1,5 @@
-import { ZodError } from 'zod';
 import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
 export const errors: Record<string, (props?: any) => NextResponse<ApiError>> = {
     noBody: () =>

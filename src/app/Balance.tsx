@@ -1,7 +1,9 @@
 import { FC } from 'react';
+
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
+
 import { serverTrpc } from '@/app/_trpc/serverClient';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {}
 
@@ -12,7 +14,7 @@ const Balance: FC<Props> = async ({}) => {
     return (
         <Card>
             <CardHeader
-                className={'flex justify-between flex-row items-center py-3'}
+                className={'flex flex-row items-center justify-between py-3'}
             >
                 <div className="text-xl">Balance</div>
                 <CardTitle className="text-2xl font-semibold">
