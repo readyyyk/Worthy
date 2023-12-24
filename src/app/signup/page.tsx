@@ -2,11 +2,14 @@
 
 import { FC, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import AuthForm from '@/components/AuthForm';
 
 interface Props {}
 
 const Page: FC<Props> = ({}) => {
+    const router = useRouter();
     const usernameState = useState('');
     const passwordState = useState('');
     const repeatedPasswordState = useState('');
@@ -27,14 +30,12 @@ const Page: FC<Props> = ({}) => {
             setError('Passwords must be equal!');
             return;
         }
-        try {
-            if (false) {
-                window.location.href = '/';
-            } else {
-                setError('Invalid credentials');
-            }
-        } catch (e) {
-            setError('Invalid credentials');
+
+        // smth like trpc.signUp(username, password)
+        if (false) {
+            router.push('/');
+        } else {
+            setError('User already exists');
         }
     };
 

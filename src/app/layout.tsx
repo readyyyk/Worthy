@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import TRPCProvider from '@/app/_trpc/Provider';
+import AuthProvider from '@/components/AuthProvider';
 import Header from '@/components/Header';
 import { cn } from '@/lib/utils';
 
@@ -26,10 +27,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     inter.className,
                 )}
             >
-                <Header />
-                {/*<AuthProvider>*/}
-                <TRPCProvider>{children}</TRPCProvider>
-                {/*</AuthProvider>*/}
+                <AuthProvider>
+                    <TRPCProvider>
+                        <Header />
+                        {children}
+                    </TRPCProvider>
+                </AuthProvider>
             </body>
         </html>
     );

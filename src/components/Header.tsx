@@ -21,8 +21,11 @@ const Header: FC<Props> = ({}) => {
                 size="icon"
                 variant="outline"
                 className={'shadow-lg shadow-slate-800'}
+                asChild
             >
-                <UserIcon />
+                <Link href={'/me'}>
+                    <UserIcon />
+                </Link>
             </Button>
         </header>
     );
