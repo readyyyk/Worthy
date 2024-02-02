@@ -1,6 +1,6 @@
 export { default } from 'next-auth/middleware';
 
-const except: string[] = [
+/*const except: string[] = [
     // from NextJS example
     'api',
     '_next/static',
@@ -10,9 +10,9 @@ const except: string[] = [
     // added
     'signin',
     'signup',
-] as const;
+] as const;*/
 
-console.info('/((?!' + except.join('|') + ').*)');
+// console.info('/((?!' + except.join('|') + ').*)');
 export const config = {
     matcher: [
         '/((?!api|_next/static|_next/image|favicon.ico|signin|signup).*)',

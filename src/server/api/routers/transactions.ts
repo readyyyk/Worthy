@@ -44,15 +44,17 @@ export const transactionsRouter = createTRPCRouter({
 
 
             // const b =
-            void input.isIncome ?
+            if (input.isIncome) {
                 await ctx.db
                     .update(usersTable)
                     .set({ balance: sql`${usersTable.balance} + ${formatted}` })
-                    .where(eq(usersTable.id, ctx.session.user.id)) :
+                    .where(eq(usersTable.id, ctx.session.user.id));
+            } else {
                 await ctx.db
                     .update(usersTable)
                     .set({ balance: sql`${usersTable.balance} - ${formatted}` })
                     .where(eq(usersTable.id, ctx.session.user.id));
+            }
 
             if (!tags?.length) {
                 return true;
