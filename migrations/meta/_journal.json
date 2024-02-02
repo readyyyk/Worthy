@@ -1,0 +1,41 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1706459959062,
+      "tag": "0000_special_virginia_dare",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1706548112486,
+      "tag": "0001_remarkable_luke_cage",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1706556202801,
+      "tag": "0002_aromatic_bloodstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1706557166259,
+      "tag": "0003_equal_shinko_yamashiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1706557269047,
+      "tag": "0004_perfect_wasp",
+      "breakpoints": true
+    }
+  ]
+}
