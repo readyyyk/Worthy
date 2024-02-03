@@ -4,7 +4,12 @@
  * React-Hook-Form isn't used here because it's not needed.
  * This is a simple form with minimal validation.
  */
-import type { Dispatch, FC, SetStateAction } from 'react';
+import {
+    type FC,
+    type Dispatch,
+    type SetStateAction,
+    useTransition,
+} from 'react';
 
 import Link from 'next/link';
 
@@ -39,6 +44,8 @@ const AuthForm: FC<Props> = (props) => {
         passwordState: [password, setPassword],
     } = props;
 
+    const [isPending, startTransition] = useTransition();
+
     return (
         <Card className="w-full">
             <CardHeader>
@@ -54,7 +61,7 @@ const AuthForm: FC<Props> = (props) => {
                     className={'grid gap-3'}
                     onSubmit={(e) => {
                         e.preventDefault();
-                        void handleSubmit();
+                        startTransition(handleSubmit);
                     }}
                 >
                     <Label>
@@ -92,21 +99,20 @@ const AuthForm: FC<Props> = (props) => {
                     )}
 
                     <div className={'flex gap-3'}>
-                        <Button type={'submit'} className={'w-fit'}>
+                        <Button type="submit" className="w-fit" loading={isPending}>
                             Submit
                         </Button>
-                        <Button
-                            type={'button'}
-                            className={'w-fit'}
-                            variant={'outline'}
-                            asChild
+                        <Link
+                            href={`/sign${type === 'signin' ? 'up' : 'in'}`}
                         >
-                            <Link
-                                href={`/sign${type === 'signin' ? 'up' : 'in'}`}
+                            <Button
+                                type={'button'}
+                                className={'w-fit'}
+                                variant={'outline'}
                             >
                                 Sign {type === 'signin' ? 'up' : 'in'}
-                            </Link>
-                        </Button>
+                            </Button>
+                        </Link>
                     </div>
                 </form>
             </CardContent>

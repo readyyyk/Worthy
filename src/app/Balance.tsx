@@ -1,16 +1,9 @@
 import type { FC } from 'react';
 
 import { Card, CardHeader, CardTitle } from '@/app/_components/ui/card';
-
-import { formatCurrency } from '@/lib/utils';
-import { api } from '@/trpc/server';
-
+import BalanceValue from '@/app/_components/balance-value';
 
 const Balance: FC = async ({}) => {
-    const { balance, currency } = await api.users.getBalance.query();
-
-    const formatted = formatCurrency(balance, currency);
-
     return (
         <Card>
             <CardHeader
@@ -18,7 +11,7 @@ const Balance: FC = async ({}) => {
             >
                 <div className="text-xl">Balance</div>
                 <CardTitle className="text-2xl font-semibold">
-                    {formatted}
+                    <BalanceValue />
                 </CardTitle>
             </CardHeader>
         </Card>

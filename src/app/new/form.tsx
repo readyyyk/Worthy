@@ -1,6 +1,6 @@
 'use client';
 
-import { type FC, useState } from 'react';
+import { type FC, useState, useTransition } from 'react';
 
 import { format } from 'date-fns';
 
@@ -28,6 +28,7 @@ const Form: FC<Props> = ({ isIncome }) => {
     const router = useRouter();
     const { mutateAsync } = api.transactions.create.useMutation();
     const utils = api.useUtils();
+    const [isPending, startTransition] = useTransition();
 
     const [amountInput, setAmountInput] = useState<string>('');
     const [descriptionInput, setDescriptionInput] = useState<string>('');
@@ -55,8 +56,8 @@ const Form: FC<Props> = ({ isIncome }) => {
         });
 
         if (result) {
-            await utils.transactions.getRecent.invalidate();
-            await utils.users.getBalance.invalidate();
+            await utils.transactions.getRecent.invalidate(undefined, { refetchType: 'all' });
+            await utils.users.getBalance.invalidate(undefined, { refetchType: 'all' });
             router.push('/');
         }
     };
@@ -65,7 +66,7 @@ const Form: FC<Props> = ({ isIncome }) => {
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                void handleSubmit();
+                startTransition(handleSubmit);
             }}
             className={'flex flex-col space-y-3'}
         >
@@ -81,7 +82,9 @@ const Form: FC<Props> = ({ isIncome }) => {
                         placeholder={'Amount'}
                     />
                 </Label>
-                <Select value={currencyInput} onValueChange={(v) => setCurrencyInput(v)}>
+                <Select value={currencyInput} onValueChange={(v) => setCurrencyInput(v)}
+                        disabled // TODO remove
+                >
                     <SelectTrigger>
                         <SelectValue placeholder="cur" />
                     </SelectTrigger>
@@ -148,7 +151,7 @@ const Form: FC<Props> = ({ isIncome }) => {
             </div>
 
             <div className={'m-auto w-1/2 pt-3'}>
-                <Button type={'submit'} className={'w-full'}>
+                <Button type="submit" className="w-full" loading={isPending}>
                     Submit
                 </Button>
             </div>
