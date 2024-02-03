@@ -56,7 +56,7 @@ const Transactions: FC = ({}) => {
                         <LoadingSkeletons /> :
                         error ?
                             <h1 className="text-lg text-destructive"> {error.message} </h1> :
-                            <h1 className="text-lg"> You have no transactions yet </h1>
+                            <h1 className="text-lg opacity-70 text-center"> You have no transactions yet </h1>
                 }
             </CardContent>
         </Card>

@@ -15,6 +15,10 @@ export { default } from 'next-auth/middleware';
 // console.info('/((?!' + except.join('|') + ').*)');
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|signin|signup|public|static|\.next/static/logo\.svg).*)',
+        '/',
+        '/transactions',
+        '/new',
+        '/me',
+        // '/((?!api|_next/static|_next/image|favicon.ico|signin|signup|public|static|\.next/static/logo\.svg).*)'
     ],
 };
