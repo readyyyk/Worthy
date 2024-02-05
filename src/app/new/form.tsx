@@ -1,8 +1,6 @@
 'use client';
 
-import { type FC, useState, useTransition } from 'react';
-
-import { format } from 'date-fns';
+import { type FC, useState, useTransition, useRef } from 'react';
 
 import { Badge } from '@/app/_components/ui/badge';
 import { Button } from '@/app/_components/ui/button';
@@ -19,6 +17,7 @@ import currencySymbols from '@/lib/currencySymblos';
 import { api } from '@/trpc/react';
 import { useRouter } from 'next/navigation';
 
+import { format } from 'date-fns';
 
 interface Props {
     isIncome: boolean;
@@ -35,6 +34,7 @@ const Form: FC<Props> = ({ isIncome }) => {
     const [currencyInput, setCurrencyInput] = useState<string>('BYN');  // HARDCODED
     const [tagsInputValue, setTagsInputValue] = useState('');
     const [tags, setTags] = useState<string[]>([] as string[]);
+    const dateRef = useRef<null | HTMLInputElement>(null);
     const removeTag = (tag: string) => setTags(tags.filter((a) => a !== tag));
     const handleTags = (newValue: string) => {
         if (newValue.trim().length && [' ', ','].includes(newValue.at(-1)!)) {
@@ -46,12 +46,16 @@ const Form: FC<Props> = ({ isIncome }) => {
         setTagsInputValue(newValue);
     };
     const handleSubmit = async () => {
+        if(!dateRef.current?.value) {
+            return;
+        }
+        const date = new Date(dateRef.current.value);
         const result = await mutateAsync({
             description: descriptionInput,
             isIncome: isIncome,
             amount: Number(amountInput),
             currency: currencyInput,
-            createdAt: new Date(),
+            createdAt: date,
             tags: tags,
         });
 
@@ -105,21 +109,22 @@ const Form: FC<Props> = ({ isIncome }) => {
                     onChange={(e) => setDescriptionInput(e.target.value)} />
             </Label>
 
-            <div className={'grid grid-cols-2 gap-3'}>
+            <div>
                 <Label>
                     <Input
-                        type={'date'}
-                        className={'text-center'}
-                        defaultValue={format(new Date(), 'yyyy-MM-dd')}
+                        type='datetime-local'
+                        className='text-center'
+                        defaultValue={format(new Date(), 'yyyy-MM-dd') + 'T' + format(new Date(), 'hh:mm')}
+                        ref={dateRef}
                     />
                 </Label>
-                <Label>
+                {/* <Label>
                     <Input
                         type={'time'}
                         className={'text-center'}
                         defaultValue={format(new Date(), 'hh:mm')}
                     />
-                </Label>
+                </Label> */}
             </div>
 
             {/* Tags */}

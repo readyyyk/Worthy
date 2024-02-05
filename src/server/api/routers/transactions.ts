@@ -14,6 +14,9 @@ export const transactionsRouter = createTRPCRouter({
             .orderBy(desc(transactionsTable.createdAt))
             .limit(3);
 
+
+        console.log(resp)
+
         return resp?.map(el => {
             return {
                 ...el,
