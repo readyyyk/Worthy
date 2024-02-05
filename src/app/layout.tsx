@@ -22,7 +22,7 @@ export const metadata = {
 const RootLayout = ({ children }: { children: ReactNode }) => {
     return (
         <html lang="en">
-        <body className={`font-sans ${font.variable} dark p-3`}>
+        <body className={`font-sans ${font.variable} dark p-3 pb-20`}>
         <TRPCReactProvider>
             <NextAuthProvider>
                 {children}

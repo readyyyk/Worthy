@@ -39,10 +39,11 @@ const Header: FC = ({}) => {
             return;
         }
         void (async () => {
+            if (image.length) return;
             const a = await utils.users.me.fetch();
             setImage(a.image);
         })();
-    }, [session, utils.users.me]);
+    }, [image.length, session, utils.users.me]);
 
     return <div
         className="fixed bottom-2 h-16 p-1.5 max-w-xl w-[95dvw] bg-secondary left-1/2 -translate-x-1/2 rounded-full flex justify-between">

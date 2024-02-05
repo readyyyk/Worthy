@@ -46,7 +46,7 @@ const Form: FC<Props> = ({ isIncome }) => {
         setTagsInputValue(newValue);
     };
     const handleSubmit = async () => {
-        if(!dateRef.current?.value) {
+        if (!dateRef.current?.value) {
             return;
         }
         const date = new Date(dateRef.current.value);
@@ -60,7 +60,7 @@ const Form: FC<Props> = ({ isIncome }) => {
         });
 
         if (result) {
-            await utils.transactions.getRecent.invalidate(undefined, { refetchType: 'all' });
+            await utils.transactions.invalidate(undefined, { refetchType: 'all' });
             await utils.users.getBalance.invalidate(undefined, { refetchType: 'all' });
             router.push('/');
         }
@@ -112,8 +112,8 @@ const Form: FC<Props> = ({ isIncome }) => {
             <div>
                 <Label>
                     <Input
-                        type='datetime-local'
-                        className='text-center'
+                        type="datetime-local"
+                        className="text-center"
                         defaultValue={format(new Date(), 'yyyy-MM-dd') + 'T' + format(new Date(), 'hh:mm')}
                         ref={dateRef}
                     />
