@@ -49,6 +49,8 @@ const Page: FC = () => {
         if (newTags?.length) {
             tagsString = [...new Set(newTags)].join(',');
             params.set('tags', '[' + tagsString + ']');
+        } else {
+            params.delete('tags');
         }
 
         // console.log(params.toString());
@@ -56,7 +58,7 @@ const Page: FC = () => {
     };
     const addTag = useCallback((tag: string) => {
         newSearch([...tags, tag]);
-    }, [searchParams]);
+    }, [searchParams, newSearch, tags]);
     const removeTag = useCallback((tag: string) => {
         newSearch(tags.filter(a => a !== tag));
     }, [searchParams, newSearch, tags]);

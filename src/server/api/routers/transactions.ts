@@ -60,7 +60,9 @@ export const transactionsRouter = createTRPCRouter({
 
             if (input.tags?.length) {
                 return result.filter((el) => {
-                    return el.tags.some(tag => input.tags?.includes(tag.text));
+                    return input.tags?.every((tag) =>
+                        el.tags.some(a => a.text === tag),
+                    );
                 });
             }
             return result;
