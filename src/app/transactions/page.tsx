@@ -3,6 +3,7 @@
 import { type FC, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DataTable from '@/app/transactions/data-table';
+import SearchBar from '@/app/transactions/search-bar';
 
 const searchRegex = /^\[[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+)*]$/;
 const Page: FC = () => {
@@ -27,7 +28,9 @@ const Page: FC = () => {
     }
     const tags = searchTags.slice(1, -1).split(',').filter(Boolean);
 
-    const newSearch = (newTags?: string[], newDescription?: string, newPage?: number) => {
+    const newSearch = useCallback(({ newTags, newDescription, newPage }: {
+        newTags?: string[], newDescription?: string, newPage?: number
+    }) => {
         const params = new URLSearchParams();
         if (description) {
             params.append('description', description);
@@ -40,8 +43,10 @@ const Page: FC = () => {
             params.append('tags', '[' + tagsString + ']');
         }
 
-        if (newDescription) {
+        if (newDescription?.length) {
             params.set('description', newDescription);
+        } else if (newDescription?.length === 0) {
+            params.delete('description');
         }
         if (newPage) {
             params.set('page', String(page));
@@ -53,20 +58,35 @@ const Page: FC = () => {
             params.delete('tags');
         }
 
-        // console.log(params.toString());
         router.push(pathname + '?' + params.toString());
-    };
+    }, [description, page, pathname, router, tags]);
+
+    // search tags
     const addTag = useCallback((tag: string) => {
-        newSearch([...tags, tag]);
+        newSearch({
+            newTags: [...tags, tag],
+        });
     }, [searchParams, newSearch, tags]);
     const removeTag = useCallback((tag: string) => {
-        newSearch(tags.filter(a => a !== tag));
+        newSearch({
+            newTags: tags.filter(a => a !== tag),
+        });
     }, [searchParams, newSearch, tags]);
+
+    // search description
+    const setDescription = useCallback((newDescription: string) => {
+        newSearch({ newDescription });
+    }, [newSearch]);
 
     return (
         <div>
             <h1 className={'text-center text-4xl'}>Transactions</h1>
-            <div className={'m-auto mt-6 max-w-5xl overflow-x-auto'}>
+            <SearchBar
+                className="mt-6"
+                initialValue={description}
+                setDescription={setDescription}
+            />
+            <div className="m-auto mt-2 max-w-5xl overflow-x-auto">
                 <DataTable
                     page={page}
                     tags={tags}
@@ -76,17 +96,9 @@ const Page: FC = () => {
                     addTag={addTag}
                     removeTag={removeTag}
                 />
-                {/*<DataTable*/}
-                {/*    columns={columns}*/}
-                {/*    data={transactions}*/}
-                {/*    columnVisibility={columnVisibility}*/}
-                {/*/>*/}
             </div>
         </div>
     );
 };
 
 export default Page;
-
-// export { notFound as default } from 'next/navigation';
-
