@@ -11,6 +11,9 @@ interface Props {
     tags?: string[];
     perPage?: number;
     description?: string;
+
+    addTag: (a: string) => void;
+    removeTag: (a: string) => void;
 }
 
 const thClasses = 'py-3';
@@ -36,6 +39,17 @@ const DataTable: FC<Props> = (props) => {
         return (<h1 className="text-lg opacity-70 text-center"> No data found </h1>);
     }
 
+    const generateTags = (row: typeof data[0]) => {
+        return row.tags.map((el) => {
+            const isSelected = props.tags?.includes?.(el.text);
+            return <Badge
+                key={`tag-${el.id}`}
+                variant={isSelected ? 'default' : 'secondary'}
+                onClick={() => isSelected ? props.removeTag(el.text) : props.addTag(el.text)}
+            >{el.text}</Badge>;
+        });
+    };
+
     return <table className="rounded w-full overflow-hidden p-3">
         <thead>
         <tr className="bg-secondary">
@@ -57,9 +71,9 @@ const DataTable: FC<Props> = (props) => {
                 <td className={cn(tdClasses, 'w-8')}>{row.currency}</td>
                 <td className={cn(tdClasses, 'max-w-56')}>{row.description}</td>
                 <td className={cn(tdClasses, 'w-20 text-center')}>{format(row.createdAt, 'dd.MM.yyyy HH:mm')}</td>
-                <td className={cn(tdClasses, 'flex flex-wrap w-48 gap-2')}>{row.tags.map((el) =>
-                    <Badge key={`tag-${el.id}`} variant={'secondary'}>{el.text}</Badge>,
-                )}</td>
+                <td className={cn(tdClasses, 'flex flex-wrap w-48 gap-2')}>
+                    {generateTags(row)}
+                </td>
             </tr>
         ))}
         </tbody>

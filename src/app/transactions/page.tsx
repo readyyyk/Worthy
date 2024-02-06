@@ -1,11 +1,12 @@
 'use client';
 
-import { type FC } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { type FC, useCallback } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DataTable from '@/app/transactions/data-table';
 
 const searchRegex = /^\[[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+)*]$/;
 const Page: FC = () => {
+    const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -26,6 +27,40 @@ const Page: FC = () => {
     }
     const tags = searchTags.slice(1, -1).split(',').filter(Boolean);
 
+    const newSearch = (newTags?: string[], newDescription?: string, newPage?: number) => {
+        const params = new URLSearchParams();
+        if (description) {
+            params.append('description', description);
+        }
+        if (page > 1) {
+            params.append('page', String(page));
+        }
+        let tagsString = tags.join(',');
+        if (tagsString.length) {
+            params.append('tags', '[' + tagsString + ']');
+        }
+
+        if (newDescription) {
+            params.set('description', newDescription);
+        }
+        if (newPage) {
+            params.set('page', String(page));
+        }
+        if (newTags?.length) {
+            tagsString = [...new Set(newTags)].join(',');
+            params.set('tags', '[' + tagsString + ']');
+        }
+
+        // console.log(params.toString());
+        router.push(pathname + '?' + params.toString());
+    };
+    const addTag = useCallback((tag: string) => {
+        newSearch([...tags, tag]);
+    }, [searchParams]);
+    const removeTag = useCallback((tag: string) => {
+        newSearch(tags.filter(a => a !== tag));
+    }, [searchParams, newSearch, tags]);
+
     return (
         <div>
             <h1 className={'text-center text-4xl'}>Transactions</h1>
@@ -35,6 +70,9 @@ const Page: FC = () => {
                     tags={tags}
                     perPage={25}
                     description={description}
+
+                    addTag={addTag}
+                    removeTag={removeTag}
                 />
                 {/*<DataTable*/}
                 {/*    columns={columns}*/}
