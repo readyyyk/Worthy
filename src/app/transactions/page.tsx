@@ -54,7 +54,7 @@ const Page: FC = () => {
         if (newTags?.length) {
             tagsString = [...new Set(newTags)].join(',');
             params.set('tags', '[' + tagsString + ']');
-        } else {
+        } else if (newTags?.length === 0) {
             params.delete('tags');
         }
 
