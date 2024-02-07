@@ -60,7 +60,7 @@ const Form: FC<Props> = ({ isIncome }) => {
         });
 
         if (result) {
-            await utils.transactions.invalidate(undefined, { refetchType: 'all' });
+            await utils.transactions.invalidate(undefined, { refetchType: 'all' }); // TODO fix: refetches all searches with every parameters sets
             await utils.users.getBalance.invalidate(undefined, { refetchType: 'all' });
             router.push('/');
         }
@@ -114,7 +114,7 @@ const Form: FC<Props> = ({ isIncome }) => {
                     <Input
                         type="datetime-local"
                         className="text-center"
-                        defaultValue={format(new Date(), 'yyyy-MM-dd') + 'T' + format(new Date(), 'hh:mm')}
+                        defaultValue={format(new Date(), 'yyyy-MM-dd') + 'T' + format(new Date(), 'HH:mm')}
                         ref={dateRef}
                     />
                 </Label>
