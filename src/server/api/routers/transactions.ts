@@ -16,6 +16,17 @@ export const transactionsRouter = createTRPCRouter({
         }))
         .query(async ({ ctx, input }) => {
             type Transaction = Omit<typeof transactionsTable.$inferSelect, 'ownerId'>;
+
+            /*
+            SELECT tr.*, GROUP_CONCAT(tg.text)
+            FROM transactions tr
+            LEFT JOIN tags tg
+              on tg.transaction_id = tr.id
+            - WHERE tr.owner_id = 7
+            - GROUP BY tr.id
+            - ORDER BY tr.createdAt desc
+            - LIMIT 2;
+            */
             const resp = await ctx.db
                 .select({
                     id: transactionsTable.id,
@@ -24,47 +35,31 @@ export const transactionsRouter = createTRPCRouter({
                     currency: transactionsTable.currency,
                     description: transactionsTable.description,
                     createdAt: transactionsTable.createdAt,
-                    tagText: tagsTable.text,
-                    tagId: tagsTable.id,
+                    tags: sql<string | null>`GROUP_CONCAT(tags.text)`,
                 })
                 .from(transactionsTable)
                 .where(and(
                     eq(transactionsTable.ownerId, ctx.session.user.id),
                     like(transactionsTable.description, `%${input.description}%`),
                 ))
-                .orderBy(desc(transactionsTable.createdAt))
                 .offset((input.page - 1) * input.perPage)
+                .groupBy(transactionsTable.id)
+                .orderBy(desc(transactionsTable.createdAt))
                 .limit(input.perPage)
                 .leftJoin(tagsTable, eq(tagsTable.transactionId, transactionsTable.id));
 
             const result = resp.reduce((acc, el) => {
-                const found = acc.find((cur) => cur.id === el.id);
-                if (found) {
-                    if (!el.tagId || !el.tagText) {
-                        return acc;
-                    }
-                    found.tags.push({
-                        id: el.tagId,
-                        text: el.tagText,
-                    });
-                    return acc;
-                }
+                const tags = el.tags?.split(',') ?? [];
+                return [
+                    ...acc,
+                    {
+                        ...el,
+                        tags: tags,
+                        amount: el.amount / 100,
+                    },
+                ];
+            }, [] as (Transaction & { tags: string[] })[]);
 
-                acc.push({
-                    ...el,
-                    amount: el.amount / 100,
-                    tags: el.tagId && el.tagText ? [{ id: el.tagId, text: el.tagText }] : [],
-                });
-                return acc;
-            }, [] as (Transaction & { tags: { id: number, text: string }[] })[]);
-
-            if (input.tags?.length) {
-                return result.filter((el) => {
-                    return input.tags?.every((tag) =>
-                        el.tags.some(a => a.text === tag),
-                    );
-                });
-            }
             return result;
         }),
     getRecent: protectedProcedure.query(async ({ ctx }) => {

@@ -32,7 +32,7 @@ export default function Page() {
                 </Link>
             </div>
 
-            {/*<Chart />*/}
+            {/*'@mantine/charts'*/}
         </div>
     );
 }

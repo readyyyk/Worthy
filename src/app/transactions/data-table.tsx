@@ -39,14 +39,16 @@ const DataTable: FC<Props> = (props) => {
         return (<h1 className="text-lg opacity-70 text-center"> No data found </h1>);
     }
 
+    console.log(data);
+
     const generateTags = (row: typeof data[0]) => {
-        return row.tags.map((el) => {
-            const isSelected = props.tags?.includes?.(el.text);
+        return row.tags.map((tag) => {
+            const isSelected = props.tags?.includes?.(tag);
             return <Badge
-                key={`tag-${el.id}`}
+                key={`tag-${row.id}-${tag}`}
                 variant={isSelected ? 'default' : 'secondary'}
-                onClick={() => isSelected ? props.removeTag(el.text) : props.addTag(el.text)}
-            >{el.text}</Badge>;
+                onClick={() => isSelected ? props.removeTag(tag) : props.addTag(tag)}
+            >{tag}</Badge>;
         });
     };
 
