@@ -17,25 +17,14 @@ export const transactionsRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             type Transaction = Omit<typeof transactionsTable.$inferSelect, 'ownerId'>;
 
-            /*
-            SELECT tr.*, GROUP_CONCAT(tg.text)
-            FROM transactions tr
-            LEFT JOIN tags tg
-              on tg.transaction_id = tr.id
-            - WHERE tr.owner_id = 7
-            - GROUP BY tr.id
-            - ORDER BY tr.createdAt desc
-            - LIMIT 2;
-            */
-            const resp = await ctx.db
-                .select({
+            const r1 = ctx.db.select({
                     id: transactionsTable.id,
                     isIncome: transactionsTable.isIncome,
                     amount: transactionsTable.amount,
                     currency: transactionsTable.currency,
                     description: transactionsTable.description,
                     createdAt: transactionsTable.createdAt,
-                    tags: sql<string | null>`GROUP_CONCAT(tags.text)`,
+                    tags: sql<string | null>`GROUP_CONCAT(${tagsTable.text})`.as('tags'),
                 })
                 .from(transactionsTable)
                 .where(and(
@@ -47,6 +36,20 @@ export const transactionsRouter = createTRPCRouter({
                 .orderBy(desc(transactionsTable.createdAt))
                 .limit(input.perPage)
                 .leftJoin(tagsTable, eq(tagsTable.transactionId, transactionsTable.id));
+
+            let resp: (Transaction & { tags: string | null })[];
+
+            if (input.tags?.length) {
+                const sq = r1.as('sq');
+                resp = await ctx.db
+                    .select()
+                    .from(sq)
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore - according to drizzleOrm docs, aliased field is used correctly, but aliased have different signature
+                    .where(like(sq.tags, `%${input.tags.sort().join('%')}%`));
+            } else {
+                resp = await r1.execute();
+            }
 
             const result = resp.reduce((acc, el) => {
                 const tags = el.tags?.split(',') ?? [];
