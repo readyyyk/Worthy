@@ -79,14 +79,14 @@ const Page: FC = () => {
     }, [newSearch]);
 
     return (
-        <div>
+        <div className="max-w-5xl m-auto">
             <h1 className={'text-center text-4xl'}>Transactions</h1>
             <SearchBar
                 className="mt-6"
                 initialValue={description}
                 setDescription={setDescription}
             />
-            <div className="m-auto mt-2 max-w-5xl overflow-x-auto">
+            <div className="m-auto mt-2 overflow-x-auto">
                 <DataTable
                     page={page}
                     tags={tags}

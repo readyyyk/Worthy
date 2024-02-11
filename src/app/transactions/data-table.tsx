@@ -39,8 +39,6 @@ const DataTable: FC<Props> = (props) => {
         return (<h1 className="text-lg opacity-70 text-center"> No data found </h1>);
     }
 
-    console.log(data);
-
     const generateTags = (row: typeof data[0]) => {
         return row.tags.map((tag) => {
             const isSelected = props.tags?.includes?.(tag);
@@ -73,7 +71,7 @@ const DataTable: FC<Props> = (props) => {
                 <td className={cn(tdClasses, 'w-8')}>{row.currency}</td>
                 <td className={cn(tdClasses, 'max-w-56')}>{row.description}</td>
                 <td className={cn(tdClasses, 'w-20 text-center')}>{format(row.createdAt, 'dd.MM.yyyy HH:mm')}</td>
-                <td className={cn(tdClasses, 'flex flex-wrap w-48 gap-2')}>
+                <td className={cn(tdClasses, 'flex flex-wrap min-w-48 gap-2')}>
                     {generateTags(row)}
                 </td>
             </tr>
