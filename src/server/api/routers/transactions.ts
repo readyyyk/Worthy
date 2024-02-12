@@ -1,10 +1,11 @@
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { and, desc, eq, like, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import { transactionsTable } from '@/server/db/tables/transaction';
 import { TransactionCreateSchema } from '@/types/transaction';
 import { z } from 'zod';
 import { tagsTable } from '@/server/db/tables/tags';
 import { usersTable } from '@/server/db/tables/user';
+import { type SQL } from 'drizzle-orm/sql/sql';
 
 export const transactionsRouter = createTRPCRouter({
     getList: protectedProcedure
@@ -17,7 +18,34 @@ export const transactionsRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             type Transaction = Omit<typeof transactionsTable.$inferSelect, 'ownerId'>;
 
-            const r1 = ctx.db.select({
+            // if tags in input create this 2 sub queries that eval into [tr.id]
+            let tagsCondition: SQL<unknown>;
+            if (input.tags?.length) {
+                const wildcard = '%' + input.tags.map(() => ',').slice(0, -1).join('%') + '%';
+                const sq1 = ctx.db
+                    .select({
+                        transaction_id: tagsTable.transactionId,
+                        matched_tags_str: sql`GROUP_CONCAT(${tagsTable.text})`.as('matched_tags_str'),
+                    })
+                    .from(tagsTable)
+                    .where(inArray(tagsTable.text, input.tags))
+                    .groupBy(tagsTable.transactionId)
+                    .as('sq1');
+                const sq2 = ctx.db
+                    .select({
+                        transaction_id: sq1.transaction_id,
+                    })
+                    .from(sq1)
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore - according to drizzleOrm docs, aliased field is used correctly, but aliased have different signature
+                    .where(like(sq1.matched_tags_str, wildcard));
+                tagsCondition = inArray(transactionsTable.id, sq2);
+            } else {
+                tagsCondition = sql`1=1`;
+            }
+
+            // main query
+            const resp: (Transaction & { tags: string | null })[] = await ctx.db.select({
                     id: transactionsTable.id,
                     isIncome: transactionsTable.isIncome,
                     amount: transactionsTable.amount,
@@ -30,6 +58,7 @@ export const transactionsRouter = createTRPCRouter({
                 .where(and(
                     eq(transactionsTable.ownerId, ctx.session.user.id),
                     like(transactionsTable.description, `%${input.description}%`),
+                    tagsCondition,
                 ))
                 .offset((input.page - 1) * input.perPage)
                 .groupBy(transactionsTable.id)
@@ -37,20 +66,7 @@ export const transactionsRouter = createTRPCRouter({
                 .limit(input.perPage)
                 .leftJoin(tagsTable, eq(tagsTable.transactionId, transactionsTable.id));
 
-            let resp: (Transaction & { tags: string | null })[];
-
-            if (input.tags?.length) {
-                const sq = r1.as('sq');
-                resp = await ctx.db
-                    .select()
-                    .from(sq)
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore - according to drizzleOrm docs, aliased field is used correctly, but aliased have different signature
-                    .where(like(sq.tags, `%${input.tags.sort().join('%')}%`));
-            } else {
-                resp = await r1.execute();
-            }
-
+            // adjusting response
             const result = resp.reduce((acc, el) => {
                 const tags = el.tags?.split(',') ?? [];
                 return [
@@ -102,8 +118,6 @@ export const transactionsRouter = createTRPCRouter({
                 .values(toInsert)
                 .returning({ insertedId: transactionsTable.id });
 
-
-            // const b =
             if (input.isIncome) {
                 await ctx.db
                     .update(usersTable)
