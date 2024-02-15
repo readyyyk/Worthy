@@ -86,17 +86,15 @@ const Page: FC = () => {
                 initialValue={description}
                 setDescription={setDescription}
             />
-            <div className="m-auto mt-2 overflow-x-auto">
-                <DataTable
-                    page={page}
-                    tags={tags}
-                    perPage={25}
-                    description={description}
+            <DataTable
+                page={page}
+                tags={tags}
+                perPage={25}
+                description={description}
 
-                    addTag={addTag}
-                    removeTag={removeTag}
-                />
-            </div>
+                addTag={addTag}
+                removeTag={removeTag}
+            />
         </div>
     );
 };
