@@ -4,6 +4,7 @@ import { type FC, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DataTable from '@/app/transactions/data-table';
 import SearchBar from '@/app/transactions/search-bar';
+import Pagination from '@/app/transactions/pagination';
 
 const searchRegex = /^\[[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+)*]$/;
 const Page: FC = () => {
@@ -49,7 +50,7 @@ const Page: FC = () => {
             params.delete('description');
         }
         if (newPage) {
-            params.set('page', String(page));
+            params.set('page', String(newPage));
         }
         if (newTags?.length) {
             tagsString = [...new Set(newTags)].join(',');
@@ -78,6 +79,11 @@ const Page: FC = () => {
         newSearch({ newDescription });
     }, [newSearch]);
 
+    // search description
+    const setPage = useCallback((newPage: number) => {
+        newSearch({ newPage });
+    }, [newSearch]);
+
     return (
         <div className="max-w-5xl m-auto">
             <h1 className={'text-center text-4xl'}>Transactions</h1>
@@ -95,6 +101,7 @@ const Page: FC = () => {
                 addTag={addTag}
                 removeTag={removeTag}
             />
+            <Pagination setPage={setPage} current={page} />
         </div>
     );
 };
