@@ -13,6 +13,9 @@ const Summary: FC<Props> = ({ increase, decrease, total }) => {
         d: Math.floor(decrease / total * 100),
     };
 
+    percentages.i = isNaN(percentages.i) ? 0 : percentages.i;
+    percentages.d = isNaN(percentages.d) ? 0 : percentages.d;
+
     const formatted = {
         i: formatCurrency(increase, 'BYN'),
         d: formatCurrency(decrease, 'BYN'),

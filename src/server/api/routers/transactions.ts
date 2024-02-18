@@ -8,6 +8,63 @@ import { usersTable } from '@/server/db/tables/user';
 import { type SQL } from 'drizzle-orm/sql/sql';
 
 export const transactionsRouter = createTRPCRouter({
+    getSingle: protectedProcedure
+        .input(z.number())
+        .query(async ({ ctx, input }) => {
+            const resp = await ctx.db
+                .select()
+                .from(transactionsTable)
+                .where(and(
+                    eq(transactionsTable.id, input),
+                    eq(transactionsTable.ownerId, ctx.session.user.id),
+                ));
+
+            if (!resp[0]) {
+                return null;
+            }
+
+            return {
+                ...resp[0],
+                amount: resp[0].amount / 100,
+            };
+        }),
+    delete: protectedProcedure
+        .input(z.number())
+        .mutation(async ({ ctx, input }) => {
+            const transaction = await ctx.db
+                .select({
+                    amount: transactionsTable.amount,
+                    isIncome: transactionsTable.isIncome,
+                })
+                .from(transactionsTable)
+                .where(and(
+                    eq(transactionsTable.id, input),
+                    eq(transactionsTable.ownerId, ctx.session.user.id),
+                ));
+
+            if (!transaction[0]) {
+                return false;
+            }
+
+            const formatted = transaction[0].amount;
+            if (transaction[0].isIncome) {
+                await ctx.db
+                    .update(usersTable)
+                    .set({ balance: sql`${usersTable.balance} - ${formatted}` })
+                    .where(eq(usersTable.id, ctx.session.user.id));
+            } else {
+                await ctx.db
+                    .update(usersTable)
+                    .set({ balance: sql`${usersTable.balance} + ${formatted}` })
+                    .where(eq(usersTable.id, ctx.session.user.id));
+            }
+
+            await ctx.db
+                .delete(transactionsTable)
+                .where(eq(transactionsTable.id, input));
+
+            return true;
+        }),
     getList: protectedProcedure
         .input(z.object({
             page: z.number(),

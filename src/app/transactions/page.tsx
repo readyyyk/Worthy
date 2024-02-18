@@ -98,8 +98,8 @@ const Page: FC = () => {
                 perPage={25}
                 description={description}
 
-                addTag={addTag}
-                removeTag={removeTag}
+                addSearchTag={addTag}
+                removeSearchTag={removeTag}
             />
             <Pagination setPage={setPage} current={page} />
         </div>
