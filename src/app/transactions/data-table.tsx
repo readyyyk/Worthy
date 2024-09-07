@@ -69,7 +69,7 @@ const DataTable: FC<Props> = (props) => {
                     <Row
                         {...row}
                         removeSearchTag={props.removeSearchTag}
-                        addSearchTag={props.removeSearchTag}
+                        addSearchTag={props.addSearchTag}
                         searchTags={props.tags}
                         key={`data-row-${row.id}`}
                     />
