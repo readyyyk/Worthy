@@ -9,6 +9,16 @@ export default function manifest(): MetadataRoute.Manifest {
         start_url: '/',
         display: 'standalone',
         orientation: 'portrait',
+        shortcuts: [
+            {
+                name: '+ Expense',
+                url: '/new?isIncome=false',
+            },
+            {
+                name: '- Income',
+                url: '/new?isIncome=true',
+            },
+        ],
         icons: [
             {
                 src: '/favicon.ico',

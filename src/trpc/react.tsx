@@ -1,12 +1,15 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { loggerLink, unstable_httpBatchStreamLink } from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
+
 import { type ReactNode, useState } from 'react';
 
 import { type AppRouter } from '@/server/api/root';
 import { getUrl, transformer } from './shared';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
 
 export const api = createTRPCReact<AppRouter>();
@@ -15,11 +18,17 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
     const [queryClient] = useState(() => new QueryClient({
         defaultOptions: {
             queries: {
-                retry: 2,
+                retry: 1,
                 refetchOnMount: false,
                 refetchOnWindowFocus: false,
+                staleTime: Infinity,
+                cacheTime: Infinity,
             },
         },
+    }));
+
+    const [persister] = useState(() => createSyncStoragePersister({
+        storage: window.localStorage,
     }));
 
     const [trpcClient] = useState(() =>
@@ -39,10 +48,10 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
     );
 
     return (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: Infinity }}>
             <api.Provider client={trpcClient} queryClient={queryClient}>
                 {props.children}
             </api.Provider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
     );
 }
