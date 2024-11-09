@@ -22,6 +22,11 @@ const Page: FC = () => {
     }
     const page = !searchParams.has('page') ? 1 : Number(searchPage);
 
+    let startDate = Number(searchParams.get('startDate') ? searchParams.get('startDate') : undefined);
+    isNaN(startDate) && (startDate = 0);
+    let endDate = Number(searchParams.get('endDate') ? searchParams.get('endDate') : undefined);
+    isNaN(endDate) && (endDate = -1);
+
     // tags (format: [_tag1,ta_g2,tag_3])
     const searchTags = searchParams.get('tags') ?? '';
     if (searchTags !== '' && !searchRegex.test(searchTags)) {
@@ -29,8 +34,8 @@ const Page: FC = () => {
     }
     const tags = searchTags.slice(1, -1).split(',').filter(Boolean);
 
-    const newSearch = useCallback(({ newTags, newDescription, newPage }: {
-        newTags?: string[], newDescription?: string, newPage?: number
+    const newSearch = useCallback(({ newTags, newDescription, newPage, newStartDate, newEndDate }: {
+        newTags?: string[], newDescription?: string, newPage?: number, newStartDate?: number, newEndDate?: number
     }) => {
         const params = new URLSearchParams();
         if (description) {
@@ -38,6 +43,12 @@ const Page: FC = () => {
         }
         if (page > 1) {
             params.append('page', String(page));
+        }
+        if (startDate !== 0) {
+            params.set('startDate', String(startDate));
+        }
+        if (endDate !== -1) {
+            params.set('endDate', String(endDate));
         }
         let tagsString = tags.join(',');
         if (tagsString.length) {
@@ -52,6 +63,12 @@ const Page: FC = () => {
         if (newPage) {
             params.set('page', String(newPage));
         }
+        if (newStartDate) {
+            params.set('startDate', String(newStartDate));
+        }
+        if (newEndDate) {
+            params.set('endDate', String(newEndDate));
+        }
         if (newTags?.length) {
             tagsString = [...new Set(newTags)].join(',');
             params.set('tags', '[' + tagsString + ']');
@@ -60,7 +77,7 @@ const Page: FC = () => {
         }
 
         router.push(pathname + '?' + params.toString());
-    }, [description, page, pathname, router, tags]);
+    }, [description, page, pathname, router, tags, startDate, endDate]);
 
     // search tags
     const addTag = useCallback((tag: string) => {
@@ -79,6 +96,13 @@ const Page: FC = () => {
         newSearch({ newDescription });
     }, [newSearch]);
 
+    const setStartDate = useCallback((newStartDate: number) => {
+        newSearch({ newStartDate });
+    }, [newSearch]);
+    const setEndDate = useCallback((newEndDate: number) => {
+        newSearch({ newEndDate });
+    }, [newSearch]);
+
     // search description
     const setPage = useCallback((newPage: number) => {
         newSearch({ newPage });
@@ -89,10 +113,14 @@ const Page: FC = () => {
             <h1 className={'text-center text-4xl'}>Transactions</h1>
             <SearchBar
                 className="mt-6"
-                initialValue={description}
+                initialValue={{description, startDate, endDate}}
                 setDescription={setDescription}
+                setStartDate={setStartDate}
+                setEndDate={setEndDate}
             />
             <DataTable
+                startDate={startDate}
+                endDate={endDate}
                 page={page}
                 tags={tags}
                 perPage={25}

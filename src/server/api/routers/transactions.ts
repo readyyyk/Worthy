@@ -1,5 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { and, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, like, lte, sql } from 'drizzle-orm';
 import { transactionsTable } from '@/server/db/tables/transaction';
 import { TransactionCreateSchema } from '@/types/transaction';
 import { z } from 'zod';
@@ -71,6 +71,8 @@ export const transactionsRouter = createTRPCRouter({
             perPage: z.number(),
             description: z.string().optional(),
             tags: z.array(z.string()).optional(),
+            startDate: z.number().optional(),
+            endDate: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
             type Transaction = Omit<typeof transactionsTable.$inferSelect, 'ownerId'>;
@@ -115,6 +117,12 @@ export const transactionsRouter = createTRPCRouter({
                 .where(and(
                     eq(transactionsTable.ownerId, ctx.session.user.id),
                     like(transactionsTable.description, `%${input.description}%`),
+                    gte(transactionsTable.createdAt, new Date(input.startDate ?? 1)),
+                    lte(transactionsTable.createdAt,
+                        input.endDate !== -1 && input.endDate !== undefined
+                            ? new Date(input.endDate)
+                            : new Date()
+                    ),
                     tagsCondition,
                 ))
                 .offset((input.page - 1) * input.perPage)

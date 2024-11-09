@@ -12,6 +12,8 @@ interface Props {
     tags?: string[];
     perPage?: number;
     description?: string;
+    startDate?: number;
+    endDate?: number;
 
     addSearchTag: (a: string) => void;
     removeSearchTag: (a: string) => void;
@@ -22,6 +24,8 @@ const thClasses = 'py-3';
 const DataTable: FC<Props> = (props) => {
     const { data, error } = api.transactions.getList.useQuery({
         page: props.page,
+        startDate: props.startDate,
+        endDate: props.endDate === -1 ? undefined : props.endDate,
         tags: props.tags ?? [],
         perPage: props.perPage ?? 25,
         description: props.description ?? '',

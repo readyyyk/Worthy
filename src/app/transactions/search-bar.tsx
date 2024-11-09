@@ -1,35 +1,66 @@
 'use client';
 
-import { type FC, type FormEvent, useState } from 'react';
+import { type FC, type FormEvent, useRef, useState } from 'react';
 import { Input } from '@/app/_components/ui/input';
 import { Button } from '@/app/_components/ui/button';
 import { SearchIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface Props {
     className?: string;
-    initialValue?: string;
+    initialValue: {description?: string, startDate: number, endDate: number};
     setDescription: (a: string) => void;
+    setStartDate: (a: number) => void;
+    setEndDate: (a: number) => void;
 }
 
-const SearchBar: FC<Props> = ({ setDescription, className, initialValue }) => {
-    const [inputValue, setInputValue] = useState(initialValue ?? '');
+const isValid = (value?: string): boolean => {
+    return !isNaN(new Date(value ?? "")?.getTime());
+}
+
+const SearchBar: FC<Props> = ({ setDescription,setStartDate, setEndDate, className, initialValue }) => {
+    const [inputValue, setInputValue] = useState(initialValue.description ?? '');
+    const sDateInput = useRef<null | HTMLInputElement>(null);
+    const eDateInput = useRef<null | HTMLInputElement>(null);
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setDescription(inputValue);
+        inputValue !== initialValue.description && (setDescription(inputValue));
+
+        const toSetStart = new Date(sDateInput.current!.value).getTime();
+        initialValue.startDate !== toSetStart && isValid(sDateInput.current?.value) && (setStartDate(toSetStart));
+
+        const toSetEnd = new Date(eDateInput.current!.value).getTime();
+        initialValue.endDate !== toSetEnd && isValid(eDateInput.current?.value) && (setEndDate(toSetEnd));
     };
-    return (<form onSubmit={handleSubmit} className={cn('flex gap-3', className)}>
-        <Input
-            type="text"
-            placeholder="Search..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-        />
-        <Button
-            size={'icon'}
-            variant={inputValue !== initialValue ? 'success' : 'outline'}
-            className="p-2"
-        > <SearchIcon /> </Button>
+    console.log(initialValue)
+    return (<form onSubmit={handleSubmit} className={cn('flex flex-col gap-3', className)}>
+        <div className='flex gap-3'>
+            <Input
+                type="text"
+                placeholder="Search..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+            />
+            <Button
+                size={'icon'}
+                variant={'success'}
+                className="p-2"
+            > <SearchIcon /> </Button>
+        </div>
+        <div className='grid grid-cols-2 gap-3'>
+            <Input
+                type="datetime-local"
+                defaultValue={format(new Date(initialValue.startDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.startDate), 'HH:mm')}
+                ref={sDateInput}
+            />
+            <Input
+                type="datetime-local"
+                defaultValue={initialValue.endDate !== -1 ? format(new Date(initialValue.endDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.endDate), 'HH:mm') : undefined}
+                ref={eDateInput}
+            />
+        </div>
+
     </form>);
 };
 
