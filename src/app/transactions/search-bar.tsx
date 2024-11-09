@@ -33,7 +33,8 @@ const SearchBar: FC<Props> = ({ setDescription,setStartDate, setEndDate, classNa
         const toSetEnd = new Date(eDateInput.current!.value).getTime();
         initialValue.endDate !== toSetEnd && isValid(eDateInput.current?.value) && (setEndDate(toSetEnd));
     };
-    console.log(initialValue)
+
+    if (typeof window === "undefined") { return <></> }
     return (<form onSubmit={handleSubmit} className={cn('flex flex-col gap-3', className)}>
         <div className='flex gap-3'>
             <Input
@@ -59,6 +60,17 @@ const SearchBar: FC<Props> = ({ setDescription,setStartDate, setEndDate, classNa
                 defaultValue={initialValue.endDate !== -1 ? format(new Date(initialValue.endDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.endDate), 'HH:mm') : undefined}
                 ref={eDateInput}
             />
+            <div
+                className={cn(
+                    'bg-red-600 bg-opacity-20 p-4 rounded-xl border-2 border-red-900 col-span-2 text-balance text-center',
+                    localStorage.getItem("ALERT_SINGLE_FILTER") && "hidden"
+                )}
+                onClick={()=>localStorage.setItem("ALERT_SINGLE_FILTER", "1")}
+            >
+                Автор криворучка, поэтому на кнопочку поиска меняется только один из параметров. Чтобы обновить несколько ... *барабанная дробь* ... нужно нажать на кнопочку поиск несколько раз)
+                <hr/>
+                Клик + перезагрузка страницы чтобы убрать
+            </div>
         </div>
 
     </form>);
