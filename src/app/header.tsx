@@ -1,7 +1,7 @@
 'use client';
 
 import { type FC, type ReactNode, useEffect, useState } from 'react';
-import { UserIcon } from 'lucide-react';
+import { TrashIcon, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -32,6 +32,7 @@ const HeaderLink: FC<HeaderLinkProps> = ({ href, className, children }) => {
 
 const Header: FC = ({}) => {
     const [image, setImage] = useState('');
+    const [isDone, setIsDone] = useState(false);
     const session = useSession();
     const utils = api.useUtils();
     useEffect(() => {
@@ -52,14 +53,34 @@ const Header: FC = ({}) => {
             <h1 className="text-xl">Worthy</h1>
         </HeaderLink>
 
-        {session.status !== 'authenticated' || !image.length ?
-            <HeaderLink href="/signin">
-                <UserIcon />
-            </HeaderLink> :
-            <HeaderLink href="/api/auth/signout" className="aspect-auto flex items-center gap-3 px-3">
-                <Image src={image} alt={'Logout'} width={28} height={28} />
-            </HeaderLink>
-        }
+        <div className='flex-1 flex justify-end gap-x-1.5'>
+            <button
+                onClick={()=>{
+                    // i'm lazy, so no throttle
+                    if (typeof window !== 'undefined') {
+                        window.localStorage.clear();
+                        setIsDone(true);
+                        setTimeout(()=>setIsDone(false), 2000);
+                    }
+                }}
+                className={cn(
+                    'transition rounded-full bg-background aspect-square h-full w-auto grid place-items-center p-1 shadow shadow-transparent hover:shadow-white transition',
+                    isDone ? 'bg-emerald-600' : 'bg-background',
+                )}
+            >
+                <TrashIcon />
+            </button>
+
+            {session.status !== 'authenticated' || !image.length ?
+                <HeaderLink href="/signin">
+                    <UserIcon />
+                </HeaderLink> :
+                <HeaderLink href="/api/auth/signout" className="aspect-auto flex items-center gap-3 px-3">
+                    <Image src={image} alt={'Logout'} width={28} height={28} />
+                </HeaderLink>
+            }
+        </div>
+        
     </div>;
 };
 
