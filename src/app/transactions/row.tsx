@@ -3,9 +3,11 @@ import { type RouterOutputs } from '@/trpc/shared';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { AlertDialog, AlertDialogTrigger } from '@/app/_components/ui/alert-dialog';
+import { Dialog, DialogTrigger } from '@/app/_components/ui/dialog';
 import { Button } from '@/app/_components/ui/button';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import DeleteContent from '@/app/transactions/delete';
+import EditContent from '@/app/transactions/edit';
 import { Badge } from '@/app/_components/ui/badge';
 
 
@@ -18,8 +20,13 @@ type Props = RouterOutputs['transactions']['getList'][0] & {
 };
 const Row: FC<Props> = (props) => {
     const [deleteModal, setDeleteModal] = useState(false);
+    const [editModal, setEditModal] = useState(false);
+    
     const openDelete = () => setDeleteModal(true);
     const closeDelete = () => setDeleteModal(false);
+    
+    const openEdit = () => setEditModal(true);
+    const closeEdit = () => setEditModal(false);
 
     const generateTags = (searchedTags: string[] | undefined, tags: Props['tags']) => {
         return tags.map((tag) => {
@@ -60,12 +67,16 @@ const Row: FC<Props> = (props) => {
                     <DeleteContent id={props.id} close={closeDelete} />
                 </AlertDialog>
 
-                <Button
-                    disabled
-                    variant="outline"
-                    size="icon"
-                    className="p-2.5"
-                > <PencilIcon /> </Button>
+                <Dialog open={editModal}>
+                    <DialogTrigger asChild onClick={openEdit}>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="p-2.5"
+                        > <PencilIcon /> </Button>
+                    </DialogTrigger>
+                    <EditContent id={props.id} close={closeEdit} />
+                </Dialog>
             </div>
         </td>
     </tr>);

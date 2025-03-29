@@ -28,7 +28,6 @@ const DeleteContent: FC<ModalProps> = ({ id, close }) => {
             return;
         }
 
-        console.log(1);
         close();
         await utils.transactions.invalidate(undefined, { refetchType: 'all' });
         await utils.users.getBalance.invalidate(undefined, { refetchType: 'all' });

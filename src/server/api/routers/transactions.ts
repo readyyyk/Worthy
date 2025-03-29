@@ -23,9 +23,16 @@ export const transactionsRouter = createTRPCRouter({
                 return null;
             }
 
+            // Получаем теги для транзакции
+            const tags = await ctx.db
+                .select({ text: tagsTable.text })
+                .from(tagsTable)
+                .where(eq(tagsTable.transactionId, input));
+
             return {
                 ...resp[0],
                 amount: resp[0].amount / 100,
+                tags: tags.map(tag => tag.text),
             };
         }),
     delete: protectedProcedure
@@ -162,6 +169,132 @@ export const transactionsRouter = createTRPCRouter({
             };
         });
     }),
+
+    update: protectedProcedure
+        .input(TransactionCreateSchema
+            .omit({ ownerId: true })
+            .extend({
+                id: z.number(),
+                tags: z.array(z.string())
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            try {
+                // 1. Получаем текущую транзакцию
+                const currentTransaction = await ctx.db
+                    .select({
+                        amount: transactionsTable.amount,
+                        isIncome: transactionsTable.isIncome,
+                        ownerId: transactionsTable.ownerId,
+                    })
+                    .from(transactionsTable)
+                    .where(eq(transactionsTable.id, input.id));
+
+                // Проверяем, что транзакция существует и принадлежит пользователю
+                if (!currentTransaction[0]) {
+                    throw new Error("Транзакция не найдена");
+                }
+                
+                if (currentTransaction[0].ownerId !== ctx.session.user.id) {
+                    throw new Error("У вас нет прав на редактирование этой транзакции");
+                }
+
+                const { tags, id, ...rest } = input;
+                const formatted = Math.floor(input.amount * 100);
+                const currentAmount = currentTransaction[0].amount;
+                const currentIsIncome = currentTransaction[0].isIncome;
+
+
+                // Используем транзакцию базы данных для обеспечения согласованности данных
+                // Все операции должны выполниться успешно или ни одна из них
+                await ctx.db.transaction(async (tx) => {
+                    // 2. Обновляем баланс пользователя
+                    // Если тип транзакции не изменился
+                    if (currentIsIncome === input.isIncome) {
+                        const difference = formatted - currentAmount;
+                        
+                        if (difference !== 0) {
+                            if (input.isIncome) {
+                                // Для дохода: если сумма увеличилась, добавляем разницу к балансу
+                                await tx
+                                    .update(usersTable)
+                                    .set({ balance: sql`${usersTable.balance} + ${difference}` })
+                                    .where(eq(usersTable.id, ctx.session.user.id));
+                            } else {
+                                // Для расхода: если сумма увеличилась, вычитаем разницу из баланса
+                                await tx
+                                    .update(usersTable)
+                                    .set({ balance: sql`${usersTable.balance} - ${difference}` })
+                                    .where(eq(usersTable.id, ctx.session.user.id));
+                            }
+                        }
+                    }
+                    // Если тип транзакции изменился
+                    else {
+                        // Отменяем старую транзакцию
+                        if (currentIsIncome) {
+                            // Если была доходом, вычитаем из баланса
+                            await tx
+                                .update(usersTable)
+                                .set({ balance: sql`${usersTable.balance} - ${currentAmount}` })
+                                .where(eq(usersTable.id, ctx.session.user.id));
+                        } else {
+                            // Если была расходом, добавляем к балансу
+                            await tx
+                                .update(usersTable)
+                                .set({ balance: sql`${usersTable.balance} + ${currentAmount}` })
+                                .where(eq(usersTable.id, ctx.session.user.id));
+                        }
+                        
+                        // Применяем новую транзакцию
+                        if (input.isIncome) {
+                            // Если стала доходом, добавляем к балансу
+                            await tx
+                                .update(usersTable)
+                                .set({ balance: sql`${usersTable.balance} + ${formatted}` })
+                                .where(eq(usersTable.id, ctx.session.user.id));
+                        } else {
+                            // Если стала расходом, вычитаем из баланса
+                            await tx
+                                .update(usersTable)
+                                .set({ balance: sql`${usersTable.balance} - ${formatted}` })
+                                .where(eq(usersTable.id, ctx.session.user.id));
+                        }
+                    }
+
+                    // 3. Обновляем транзакцию
+                    const updateResult = await tx
+                        .update(transactionsTable)
+                        .set({
+                            ...rest,
+                            amount: formatted,
+                        })
+                        .where(eq(transactionsTable.id, id));
+
+                    // 4. Обновляем теги (удаляем старые, добавляем новые)
+                    await tx
+                        .delete(tagsTable)
+                        .where(eq(tagsTable.transactionId, id));
+
+                    if (tags?.length) {
+                        const tagsValues: (typeof tagsTable.$inferInsert)[] = tags.map((el) => {
+                            return {
+                                transactionId: id,
+                                text: el,
+                            };
+                        });
+
+                        await tx
+                            .insert(tagsTable)
+                            .values(tagsValues);
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                throw error;
+            }
+        }),
 
     create: protectedProcedure
         .input(TransactionCreateSchema
