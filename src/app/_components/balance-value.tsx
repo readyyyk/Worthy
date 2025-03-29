@@ -9,6 +9,7 @@ type Props = {
     className?: string;
 }
 const BalanceValue: FC<Props> = ({ className }) => {
+    const [isShow, setIsShow] = useState(false);
     const { data, isLoading, error } = api.users.getBalance.useQuery();
 
     const [formatted, setFormatted] = useState('');
@@ -30,7 +31,7 @@ const BalanceValue: FC<Props> = ({ className }) => {
         }
     }
 
-    return <span className={cn(className)}> {formatted} </span>;
+    return <span className={cn(className)} onClick={()=>setIsShow((p)=>!p)}> {isShow ? formatted : '****'} </span>;
 };
 
 export default BalanceValue;
