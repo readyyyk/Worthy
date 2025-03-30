@@ -1,1 +1,0 @@
-ALTER TABLE users ADD `primary_currency` text(3) NOT NULL;

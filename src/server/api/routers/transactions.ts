@@ -17,7 +17,7 @@ export const transactionsRouter = createTRPCRouter({
                 .where(and(
                     eq(transactionsTable.id, input),
                     eq(transactionsTable.ownerId, ctx.session.user.id),
-                ));
+                ))
 
             if (!resp[0]) {
                 return null;
