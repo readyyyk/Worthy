@@ -13,10 +13,23 @@ import { Badge } from '@/app/_components/ui/badge';
 
 const tdClasses = 'p-3';
 
-type Props = RouterOutputs['transactions']['getList'][0] & {
+// Определяем тип транзакции на основе возвращаемого значения API
+type Transaction = {
+    id: number;
+    amount: number;
+    isIncome: boolean;
+    currency: string;
+    description: string;
+    createdAt: Date;
+    tags: string[];
+    session: { id: number; name: string | null } | null;
+};
+
+type Props = Transaction & {
     searchTags: string[] | undefined;
     addSearchTag: (a: string) => void;
     removeSearchTag: (a: string) => void;
+    isInTable?: boolean; // Флаг, указывающий, используется ли компонент внутри таблицы
 };
 const Row: FC<Props> = (props) => {
     const [deleteModal, setDeleteModal] = useState(false);
@@ -40,46 +53,68 @@ const Row: FC<Props> = (props) => {
         });
     };
 
-    return (<tr className="bg-secondary/30 odd:bg-transparent border-b">
-        <td className={cn(
-            tdClasses,
-            'w-8 bg-opacity-30',
-            props.isIncome ? 'bg-green-500' : 'bg-red-700',
-        )}>{props.amount}</td>
-        <td className={cn(tdClasses, 'w-8')}>{props.currency}</td>
-        <td className={cn(tdClasses, 'max-w-56')}>{props.description}</td>
-        <td className={cn(tdClasses, 'w-20 text-center')}>{format(props.createdAt, 'dd.MM.yyyy HH:mm')}</td>
-        <td className={cn(tdClasses, 'min-w-48')}>
-            <div className="flex flex-wrap gap-2">
-                {generateTags(props.searchTags, props.tags)}
-            </div>
-        </td>
-        <td className={cn(tdClasses, 'w-32')}>
-            <div className="flex justify-center gap-2">
-                <AlertDialog open={deleteModal}>
-                    <AlertDialogTrigger asChild onClick={openDelete}>
-                        <Button
-                            size="icon"
-                            className="p-2.5"
-                            variant="outline"
-                        > <TrashIcon /> </Button>
-                    </AlertDialogTrigger>
-                    <DeleteContent id={props.id} close={closeDelete} />
-                </AlertDialog>
+    // Если компонент используется внутри таблицы с чекбоксами, не нужно создавать tr
+    const content = (
+        <>
+            <td className={cn(
+                tdClasses,
+                'w-8 bg-opacity-30',
+                props.isIncome ? 'bg-green-500' : 'bg-red-700',
+            )}>{props.amount}</td>
+            <td className={cn(tdClasses, 'w-8')}>{props.currency}</td>
+            <td className={cn(tdClasses, 'max-w-56')}>
+                {props.description}
+                {props.session && (
+                    <Badge variant="outline" className="ml-2">
+                        {props.session.name || 'Сессия'}
+                    </Badge>
+                )}
+            </td>
+            <td className={cn(tdClasses, 'w-20 text-center')}>
+                {props.createdAt instanceof Date
+                    ? format(props.createdAt, 'dd.MM.yyyy HH:mm')
+                    : format(new Date(props.createdAt), 'dd.MM.yyyy HH:mm')}
+            </td>
+            <td className={cn(tdClasses, 'min-w-48')}>
+                <div className="flex flex-wrap gap-2">
+                    {generateTags(props.searchTags, props.tags)}
+                </div>
+            </td>
+            <td className={cn(tdClasses, 'w-32')}>
+                <div className="flex justify-center gap-2">
+                    <AlertDialog open={deleteModal}>
+                        <AlertDialogTrigger asChild onClick={openDelete}>
+                            <Button
+                                size="icon"
+                                className="p-2.5"
+                                variant="outline"
+                            > <TrashIcon /> </Button>
+                        </AlertDialogTrigger>
+                        <DeleteContent id={props.id} close={closeDelete} />
+                    </AlertDialog>
 
-                <Dialog open={editModal}>
-                    <DialogTrigger asChild onClick={openEdit}>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="p-2.5"
-                        > <PencilIcon /> </Button>
-                    </DialogTrigger>
-                    <EditContent id={props.id} close={closeEdit} />
-                </Dialog>
-            </div>
-        </td>
-    </tr>);
+                    <Dialog open={editModal}>
+                        <DialogTrigger asChild onClick={openEdit}>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="p-2.5"
+                            > <PencilIcon /> </Button>
+                        </DialogTrigger>
+                        <EditContent id={props.id} close={closeEdit} />
+                    </Dialog>
+                </div>
+            </td>
+        </>
+    );
+
+    // Если компонент используется внутри таблицы, возвращаем только содержимое
+    if (props.isInTable) {
+        return content;
+    }
+    
+    // Иначе возвращаем только содержимое
+    return content;
 };
 
 export default Row;

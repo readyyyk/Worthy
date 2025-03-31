@@ -1,10 +1,12 @@
 'use client';
 
-import { type FC, useCallback } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DataTable from '@/app/transactions/data-table';
 import SearchBar from '@/app/transactions/search-bar';
 import Pagination from '@/app/transactions/pagination';
+import { Button } from '@/app/_components/ui/button';
+import { Layers, LayersIcon } from 'lucide-react';
 
 const searchRegex = /^\[[a-zA-Z0-9_]+(,[a-zA-Z0-9_]+)*]$/;
 const Page: FC = () => {
@@ -33,9 +35,22 @@ const Page: FC = () => {
         router.back();
     }
     const tags = searchTags.slice(1, -1).split(',').filter(Boolean);
+    
+    // Параметр группировки по сессиям
+    const groupBySession = searchParams.get('groupBySession') === 'true';
+    
+    // Параметр фильтрации по ID сессии
+    const sessionId = Number(searchParams.get('sessionId'));
+    const hasSessionId = !isNaN(sessionId) && searchParams.has('sessionId');
 
-    const newSearch = useCallback(({ newTags, newDescription, newPage, newStartDate, newEndDate }: {
-        newTags?: string[], newDescription?: string, newPage?: number, newStartDate?: number, newEndDate?: number
+    const newSearch = useCallback(({ newTags, newDescription, newPage, newStartDate, newEndDate, newGroupBySession, newSessionId }: {
+        newTags?: string[],
+        newDescription?: string,
+        newPage?: number,
+        newStartDate?: number,
+        newEndDate?: number,
+        newGroupBySession?: boolean,
+        newSessionId?: number | null
     }) => {
         const params = new URLSearchParams();
         if (description) {
@@ -53,6 +68,16 @@ const Page: FC = () => {
         let tagsString = tags.join(',');
         if (tagsString.length) {
             params.append('tags', '[' + tagsString + ']');
+        }
+        
+        // Добавляем параметр группировки по сессиям
+        if (groupBySession) {
+            params.append('groupBySession', 'true');
+        }
+        
+        // Добавляем параметр фильтрации по ID сессии
+        if (hasSessionId) {
+            params.append('sessionId', String(sessionId));
         }
 
         if (newDescription?.length) {
@@ -75,9 +100,27 @@ const Page: FC = () => {
         } else if (newTags?.length === 0) {
             params.delete('tags');
         }
+        
+        // Обновляем параметр группировки по сессиям
+        if (newGroupBySession !== undefined) {
+            if (newGroupBySession) {
+                params.set('groupBySession', 'true');
+            } else {
+                params.delete('groupBySession');
+            }
+        }
+        
+        // Обновляем параметр фильтрации по ID сессии
+        if (newSessionId !== undefined) {
+            if (newSessionId === null) {
+                params.delete('sessionId');
+            } else {
+                params.set('sessionId', String(newSessionId));
+            }
+        }
 
         router.push(pathname + '?' + params.toString());
-    }, [description, page, pathname, router, tags, startDate, endDate]);
+    }, [description, page, pathname, router, tags, startDate, endDate, groupBySession, hasSessionId, sessionId]);
 
     // search tags
     const addTag = useCallback((tag: string) => {
@@ -107,10 +150,33 @@ const Page: FC = () => {
     const setPage = useCallback((newPage: number) => {
         newSearch({ newPage });
     }, [newSearch]);
+    
+    // Переключение группировки по сессиям
+    const toggleGroupBySession = useCallback(() => {
+        newSearch({ newGroupBySession: !groupBySession });
+    }, [newSearch, groupBySession]);
+    
+    // Сброс фильтра по сессии
+    const clearSessionFilter = useCallback(() => {
+        newSearch({ newSessionId: null });
+    }, [newSearch]);
 
     return (
         <div className="max-w-5xl m-auto">
-            <h1 className={'text-center text-4xl'}>Transactions</h1>
+            <div className="flex justify-between items-center">
+                <h1 className={'text-center text-4xl'}>Transactions</h1>
+                <div className="flex gap-2">
+                    {hasSessionId && (
+                        <Button
+                            variant="outline"
+                            onClick={clearSessionFilter}
+                            className="flex items-center gap-2"
+                        >
+                            Сбросить фильтр сессии
+                        </Button>
+                    )}
+                </div>
+            </div>
             <SearchBar
                 className="mt-6"
                 initialValue={{description, startDate, endDate}}
@@ -125,6 +191,8 @@ const Page: FC = () => {
                 tags={tags}
                 perPage={25}
                 description={description}
+                groupBySession={true} // Всегда используем группировку
+                sessionId={hasSessionId ? sessionId : undefined}
 
                 addSearchTag={addTag}
                 removeSearchTag={removeTag}

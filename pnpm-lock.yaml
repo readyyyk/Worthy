@@ -9,9 +9,7 @@ specifiers:
   '@radix-ui/react-select': ^2.0.0
   '@radix-ui/react-slot': ^1.0.2
   '@t3-oss/env-nextjs': ^0.7.1
-  '@tanstack/query-sync-storage-persister': '4'
   '@tanstack/react-query': ^4.36.1
-  '@tanstack/react-query-persist-client': '4'
   '@trpc/client': ^10.43.6
   '@trpc/next': ^10.43.6
   '@trpc/react-query': ^10.43.6
@@ -59,9 +57,7 @@ dependencies:
   '@radix-ui/react-select': 2.1.6_5bmwtq5mhtjh43ikcm6yzcamla
   '@radix-ui/react-slot': 1.1.2_yr74g6n5s36ci3dfijgzqmwoca
   '@t3-oss/env-nextjs': 0.7.3_4hleiokcfr2dt54e2hlkoleycu
-  '@tanstack/query-sync-storage-persister': 4.36.1
   '@tanstack/react-query': 4.36.1_biqbaboplfbrettd7655fr4n2y
-  '@tanstack/react-query-persist-client': 4.36.1_36z47x7546ezgz5hgrznhvzpxe
   '@trpc/client': 10.45.2_@trpc+server@10.45.2
   '@trpc/next': 10.45.2_7tovve5cm2dwve6dv7awx46y5u
   '@trpc/react-query': 10.45.2_l6yvthtccfv652rfd6ab5cyu2q
@@ -1528,27 +1524,6 @@ packages:
 
   /@tanstack/query-core/4.36.1:
     resolution: {integrity: sha512-DJSilV5+ytBP1FbFcEJovv4rnnm/CokuVvrBEtW/Va9DvuJ3HksbXUJEpI0aV1KtuL4ZoO9AVE6PyNLzF7tLeA==}
-    dev: false
-
-  /@tanstack/query-persist-client-core/4.36.1:
-    resolution: {integrity: sha512-eocgCeI7D7TRv1IUUBMfVwOI0wdSmMkBIbkKhqEdTrnUHUQEeOaYac8oeZk2cumAWJdycu6P/wB+WqGynTnzXg==}
-    dependencies:
-      '@tanstack/query-core': 4.36.1
-    dev: false
-
-  /@tanstack/query-sync-storage-persister/4.36.1:
-    resolution: {integrity: sha512-yMEt5hWe2+1eclf1agMtXHnPIkxEida0lYWkfdhR8U6KXk/lO4Vca6piJmhKI85t0NHlx3l/z6zX+t/Fn5O9NA==}
-    dependencies:
-      '@tanstack/query-persist-client-core': 4.36.1
-    dev: false
-
-  /@tanstack/react-query-persist-client/4.36.1_36z47x7546ezgz5hgrznhvzpxe:
-    resolution: {integrity: sha512-32I5b9aAu4NCiXZ7Te/KEQLfHbYeTNriVPrKYcvEThnZ9tlW01vLcSoxpUIsMYRsembvJUUAkzYBAiZHLOd6pQ==}
-    peerDependencies:
-      '@tanstack/react-query': ^4.36.1
-    dependencies:
-      '@tanstack/query-persist-client-core': 4.36.1
-      '@tanstack/react-query': 4.36.1_biqbaboplfbrettd7655fr4n2y
     dev: false
 
   /@tanstack/react-query/4.36.1_biqbaboplfbrettd7655fr4n2y:

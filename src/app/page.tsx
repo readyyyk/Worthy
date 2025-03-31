@@ -1,4 +1,4 @@
-import { MinusIcon, PlusIcon } from 'lucide-react';
+import { LayersIcon, MinusIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/app/_components/ui/button';

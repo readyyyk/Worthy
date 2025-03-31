@@ -4,6 +4,8 @@ import { transactionsTable } from '@/server/db/tables/transaction';
 import { TransactionCreateSchema } from '@/types/transaction';
 import { z } from 'zod';
 import { tagsTable } from '@/server/db/tables/tags';
+import { sessionTransactionsTable } from '@/server/db/tables/session_transaction';
+import { shoppingSessionsTable } from '@/server/db/tables/shopping_session';
 import { usersTable } from '@/server/db/tables/user';
 import { type SQL } from 'drizzle-orm/sql/sql';
 
@@ -29,10 +31,29 @@ export const transactionsRouter = createTRPCRouter({
                 .from(tagsTable)
                 .where(eq(tagsTable.transactionId, input));
 
+            // Получаем информацию о сессии, если транзакция входит в сессию
+            const sessionInfo = await ctx.db
+                .select({
+                    sessionId: sessionTransactionsTable.sessionId,
+                    sessionName: shoppingSessionsTable.name,
+                    sessionCreatedAt: shoppingSessionsTable.createdAt,
+                })
+                .from(sessionTransactionsTable)
+                .innerJoin(
+                    shoppingSessionsTable,
+                    eq(shoppingSessionsTable.id, sessionTransactionsTable.sessionId)
+                )
+                .where(eq(sessionTransactionsTable.transactionId, input));
+
             return {
                 ...resp[0],
                 amount: resp[0].amount / 100,
                 tags: tags.map(tag => tag.text),
+                session: sessionInfo[0] ? {
+                    id: sessionInfo[0].sessionId,
+                    name: sessionInfo[0].sessionName,
+                    createdAt: sessionInfo[0].sessionCreatedAt,
+                } : null,
             };
         }),
     delete: protectedProcedure
@@ -80,6 +101,8 @@ export const transactionsRouter = createTRPCRouter({
             tags: z.array(z.string()).optional(),
             startDate: z.number().optional(),
             endDate: z.number().optional(),
+            sessionId: z.number().optional(), // Добавляем возможность фильтрации по ID сессии
+            groupBySession: z.boolean().optional(), // Добавляем возможность группировки по сессиям
         }))
         .query(async ({ ctx, input }) => {
             type Transaction = Omit<typeof transactionsTable.$inferSelect, 'ownerId'>;
@@ -111,7 +134,7 @@ export const transactionsRouter = createTRPCRouter({
             }
 
             // main query
-            const resp: (Transaction & { tags: string | null })[] = await ctx.db.select({
+            const resp: (Transaction & { tags: string | null, sessionId: number | null, sessionName: string | null })[] = await ctx.db.select({
                     id: transactionsTable.id,
                     isIncome: transactionsTable.isIncome,
                     amount: transactionsTable.amount,
@@ -119,8 +142,18 @@ export const transactionsRouter = createTRPCRouter({
                     description: transactionsTable.description,
                     createdAt: transactionsTable.createdAt,
                     tags: sql<string | null>`GROUP_CONCAT(${tagsTable.text})`.as('tags'),
+                    sessionId: sessionTransactionsTable.sessionId,
+                    sessionName: shoppingSessionsTable.name,
                 })
                 .from(transactionsTable)
+                .leftJoin(
+                    sessionTransactionsTable,
+                    eq(sessionTransactionsTable.transactionId, transactionsTable.id)
+                )
+                .leftJoin(
+                    shoppingSessionsTable,
+                    eq(shoppingSessionsTable.id, sessionTransactionsTable.sessionId)
+                )
                 .where(and(
                     eq(transactionsTable.ownerId, ctx.session.user.id),
                     like(transactionsTable.description, `%${input.description}%`),
@@ -131,6 +164,10 @@ export const transactionsRouter = createTRPCRouter({
                             : new Date()
                     ),
                     tagsCondition,
+                    // Если указан sessionId, фильтруем по нему
+                    input.sessionId
+                        ? eq(sessionTransactionsTable.sessionId, input.sessionId)
+                        : sql`1=1`,
                 ))
                 .offset((input.page - 1) * input.perPage)
                 .groupBy(transactionsTable.id)
@@ -138,19 +175,81 @@ export const transactionsRouter = createTRPCRouter({
                 .limit(input.perPage)
                 .leftJoin(tagsTable, eq(tagsTable.transactionId, transactionsTable.id));
 
+            // Если нужна группировка по сессиям, сначала получаем все сессии
+            let sessionGroups: { id: number, name: string | null, transactions: any[] }[] = [];
+            let ungroupedTransactions: any[] = [];
+            
+            if (input.groupBySession) {
+                // Получаем все сессии, в которые входят транзакции из результата
+                const sessionIds = resp
+                    .filter(t => t.sessionId !== null)
+                    .map(t => t.sessionId as number);
+                
+                if (sessionIds.length > 0) {
+                    const uniqueSessionIds = [...new Set(sessionIds)];
+                    
+                    // Создаем группы для каждой сессии
+                    sessionGroups = uniqueSessionIds.map(sessionId => {
+                        const firstTransaction = resp.find(t => t.sessionId === sessionId);
+                        return {
+                            id: sessionId,
+                            name: firstTransaction?.sessionName ?? null,
+                            transactions: [],
+                        };
+                    });
+                }
+            }
+
             // adjusting response
             const result = resp.reduce((acc, el) => {
                 const tags = el.tags?.split(',') ?? [];
-                return [
-                    ...acc,
-                    {
-                        ...el,
-                        tags: tags,
-                        amount: el.amount / 100,
-                    },
-                ];
-            }, [] as (Transaction & { tags: string[] })[]);
+                const transaction = {
+                    ...el,
+                    tags: tags,
+                    amount: el.amount / 100,
+                    session: el.sessionId ? {
+                        id: el.sessionId,
+                        name: el.sessionName,
+                    } : null,
+                };
+                // Создаем новый объект без ненужных полей
+                const cleanTransaction = {
+                    ...transaction,
+                };
+                
+                // Удаляем ненужные поля из нового объекта
+                if ('sessionId' in cleanTransaction) {
+                    delete (cleanTransaction as any).sessionId;
+                }
+                if ('sessionName' in cleanTransaction) {
+                    delete (cleanTransaction as any).sessionName;
+                }
+                
+                // Если нужна группировка по сессиям, добавляем транзакцию в соответствующую группу
+                if (input.groupBySession) {
+                    if (transaction.session) {
+                        const sessionGroup = sessionGroups.find(g => g.id === cleanTransaction.session?.id);
+                        if (sessionGroup) {
+                            sessionGroup.transactions.push(cleanTransaction);
+                            return acc;
+                        }
+                    } else {
+                        ungroupedTransactions.push(cleanTransaction);
+                        return acc;
+                    }
+                }
+                
+                return [...acc, cleanTransaction];
+            }, [] as (Transaction & { tags: string[], session: { id: number, name: string | null } | null })[]);
 
+            // Если нужна группировка по сессиям, возвращаем группы и негруппированные транзакции
+            if (input.groupBySession) {
+                return {
+                    sessionGroups,
+                    ungroupedTransactions,
+                };
+            }
+            
             return result;
         }),
     getRecent: protectedProcedure.query(async ({ ctx }) => {
@@ -299,50 +398,108 @@ export const transactionsRouter = createTRPCRouter({
     create: protectedProcedure
         .input(TransactionCreateSchema
             .omit({ ownerId: true })
-            .extend({ tags: z.array(z.string()) }),
+            .extend({
+                tags: z.array(z.string()),
+                sessionId: z.number().optional(), // ID существующей сессии
+                createSession: z.boolean().optional(), // Создать новую сессию
+                sessionName: z.string().optional(), // Название новой сессии
+            }),
         )
         .mutation(async ({ ctx, input }) => {
-            // TODO use Transaction
-            const { tags, ...rest } = input;
-            const formatted = Math.floor(input.amount * 100);
-            const toInsert: (typeof transactionsTable.$inferInsert) = {
-                ...rest,
-                amount: formatted,
-                ownerId: ctx.session.user.id,
-            };
-
-            const resp = await ctx.db
-                .insert(transactionsTable)
-                .values(toInsert)
-                .returning({ insertedId: transactionsTable.id });
-
-            if (input.isIncome) {
-                await ctx.db
-                    .update(usersTable)
-                    .set({ balance: sql`${usersTable.balance} + ${formatted}` })
-                    .where(eq(usersTable.id, ctx.session.user.id));
-            } else {
-                await ctx.db
-                    .update(usersTable)
-                    .set({ balance: sql`${usersTable.balance} - ${formatted}` })
-                    .where(eq(usersTable.id, ctx.session.user.id));
-            }
-
-            if (!tags?.length) {
-                return true;
-            }
-
-            const tagsValues: (typeof tagsTable.$inferInsert)[] = tags.map((el) => {
-                return {
-                    transactionId: Number(resp[0]!.insertedId),
-                    text: el,
+            // Используем транзакцию базы данных для обеспечения согласованности данных
+            return await ctx.db.transaction(async (tx) => {
+                const { tags, sessionId, createSession, sessionName, ...rest } = input;
+                const formatted = Math.floor(input.amount * 100);
+                const toInsert: (typeof transactionsTable.$inferInsert) = {
+                    ...rest,
+                    amount: formatted,
+                    ownerId: ctx.session.user.id,
                 };
+
+                const resp = await tx
+                    .insert(transactionsTable)
+                    .values(toInsert)
+                    .returning({ insertedId: transactionsTable.id });
+
+                if (input.isIncome) {
+                    await tx
+                        .update(usersTable)
+                        .set({ balance: sql`${usersTable.balance} + ${formatted}` })
+                        .where(eq(usersTable.id, ctx.session.user.id));
+                } else {
+                    await tx
+                        .update(usersTable)
+                        .set({ balance: sql`${usersTable.balance} - ${formatted}` })
+                        .where(eq(usersTable.id, ctx.session.user.id));
+                }
+
+                const transactionId = Number(resp[0]!.insertedId);
+
+                // Добавляем теги, если они есть
+                if (tags?.length) {
+                    const tagsValues: (typeof tagsTable.$inferInsert)[] = tags.map((el) => {
+                        return {
+                            transactionId,
+                            text: el,
+                        };
+                    });
+
+                    await tx
+                        .insert(tagsTable)
+                        .values(tagsValues);
+                }
+
+                // Если указан ID существующей сессии, добавляем транзакцию в неё
+                if (sessionId) {
+                    // Проверяем, что сессия существует и принадлежит пользователю
+                    const session = await tx
+                        .select({ id: shoppingSessionsTable.id })
+                        .from(shoppingSessionsTable)
+                        .where(and(
+                            eq(shoppingSessionsTable.id, sessionId),
+                            eq(shoppingSessionsTable.ownerId, ctx.session.user.id)
+                        ));
+
+                    if (!session[0]) {
+                        throw new Error('Сессия не найдена или не принадлежит пользователю');
+                    }
+
+                    // Добавляем транзакцию в сессию
+                    await tx
+                        .insert(sessionTransactionsTable)
+                        .values({
+                            sessionId,
+                            transactionId,
+                        });
+                }
+                // Если нужно создать новую сессию
+                else if (createSession) {
+                    // Создаем новую сессию
+                    const session = await tx
+                        .insert(shoppingSessionsTable)
+                        .values({
+                            ownerId: ctx.session.user.id,
+                            name: sessionName || null,
+                        })
+                        .returning({ id: shoppingSessionsTable.id });
+
+                    if (!session[0]) {
+                        throw new Error('Не удалось создать сессию');
+                    }
+
+                    const newSessionId = session[0].id;
+
+                    // Добавляем транзакцию в новую сессию
+                    await tx
+                        .insert(sessionTransactionsTable)
+                        .values({
+                            sessionId: newSessionId,
+                            transactionId,
+                        });
+                }
+
+                return true;
             });
 
-            await ctx.db
-                .insert(tagsTable)
-                .values(tagsValues);
-
-            return true;
         }),
 });

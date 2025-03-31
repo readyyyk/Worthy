@@ -1,7 +1,7 @@
 'use client';
 
 import { type FC, type ReactNode, useEffect, useState } from 'react';
-import { BookmarkIcon, TrashIcon, UserIcon } from 'lucide-react';
+import { BookmarkIcon, LayersIcon, TrashIcon, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -56,6 +56,10 @@ const Header: FC = ({}) => {
         <div className='flex-1 flex justify-end gap-x-1.5'>
             <HeaderLink href="/templates">
                 <BookmarkIcon />
+            </HeaderLink>
+            
+            <HeaderLink href="/sessions">
+                <LayersIcon />
             </HeaderLink>
             
             <button

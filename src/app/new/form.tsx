@@ -1,6 +1,6 @@
 'use client';
 
-import { type FC, useState, useTransition, useRef, useEffect } from 'react';
+import { type FC, useState, useTransition, useRef, useEffect, useCallback } from 'react';
 
 import { Badge } from '@/app/_components/ui/badge';
 import { Button } from '@/app/_components/ui/button';
@@ -25,6 +25,7 @@ import { api } from '@/trpc/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import TemplateSelector from './template-selector';
+import SessionSelector from './session-selector';
 
 interface Props {
     isIncome: boolean;
@@ -37,6 +38,7 @@ const Form: FC<Props> = ({ isIncome }) => {
     
     const { mutateAsync: createTransaction } = api.transactions.create.useMutation();
     const { mutateAsync: createTemplate } = api.templates.create.useMutation();
+    const { mutateAsync: createSession } = api.shoppingSessions.createSession.useMutation();
     const utils = api.useUtils();
     const [isPending, startTransition] = useTransition();
 
@@ -52,6 +54,11 @@ const Form: FC<Props> = ({ isIncome }) => {
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
+    
+    // Состояния для работы с сессиями
+    const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+    const [createNewSession, setCreateNewSession] = useState(false);
+    const [newSessionName, setNewSessionName] = useState('');
 
     // Получение данных шаблона при выборе
     const { data: template, refetch: refetchTemplate } = api.templates.getSingle.useQuery(
@@ -94,6 +101,18 @@ const Form: FC<Props> = ({ isIncome }) => {
         setSelectedTemplateId(templateId);
         await refetchTemplate();
     };
+    
+    // Обработчик выбора сессии
+    const handleSelectSession = useCallback((sessionId: number | null) => {
+        setSelectedSessionId(sessionId);
+        setCreateNewSession(false);
+    }, []);
+    
+    // Обработчик создания новой сессии
+    const handleCreateSession = useCallback((name: string) => {
+        setCreateNewSession(true);
+        setNewSessionName(name);
+    }, []);
 
     // Обработчик сохранения транзакции
     const handleSubmit = async () => {
@@ -108,6 +127,9 @@ const Form: FC<Props> = ({ isIncome }) => {
             currency: currencyInput,
             createdAt: date,
             tags: tags,
+            sessionId: selectedSessionId !== null ? selectedSessionId : undefined,
+            createSession: createNewSession,
+            sessionName: newSessionName || undefined,
         });
 
         if (result) {
@@ -142,6 +164,10 @@ const Form: FC<Props> = ({ isIncome }) => {
     return (
         <>
             <TemplateSelector onSelectTemplate={handleSelectTemplate} />
+            <SessionSelector
+                onSelectSession={handleSelectSession}
+                onCreateSession={handleCreateSession}
+            />
             
             <form
                 onSubmit={(e) => {
