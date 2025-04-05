@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { loggerLink, unstable_httpBatchStreamLink } from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
 
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useState, useEffect } from 'react';
 
 import { type AppRouter } from '@/server/api/root';
 import { getUrl, transformer } from './shared';
+import { setupPersistentQueryClient, CACHE_CONFIG } from '@/lib/persistQueryClient';
+import { registerServiceWorker } from '@/lib/serviceWorker';
 
 export const api = createTRPCReact<AppRouter>();
 
@@ -19,11 +21,22 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
                 retry: 1,
                 refetchOnMount: false,
                 refetchOnWindowFocus: false,
-                staleTime: Infinity,
-                cacheTime: Infinity,
+                staleTime: CACHE_CONFIG.default.staleTime,
+                cacheTime: CACHE_CONFIG.default.cacheTime,
             },
         },
     }));
+
+    // Настраиваем персистентное хранение кеша
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Настраиваем персистентное хранение кеша
+            setupPersistentQueryClient(queryClient);
+            
+            // Регистрируем Service Worker для PWA
+            registerServiceWorker();
+        }
+    }, [queryClient]);
 
     const [trpcClient] = useState(() =>
         api.createClient({

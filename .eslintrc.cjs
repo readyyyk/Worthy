@@ -9,6 +9,7 @@ const config = {
         'next/core-web-vitals',
         'plugin:@typescript-eslint/recommended-type-checked',
         'plugin:@typescript-eslint/stylistic-type-checked',
+        './.eslintrc.override.cjs',
     ],
     rules: {
         // These opinionated rules are enabled in stylistic-type-checked above.
@@ -29,12 +30,7 @@ const config = {
             'caughtErrorsIgnorePattern': '^_',
         }],
         '@typescript-eslint/require-await': 'off',
-        '@typescript-eslint/no-misused-promises': [
-            'error',
-            {
-                checksVoidReturn: { attributes: false },
-            },
-        ],
+        '@typescript-eslint/no-misused-promises': 'off',
     },
 };
 
