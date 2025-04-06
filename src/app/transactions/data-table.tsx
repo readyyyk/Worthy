@@ -340,7 +340,7 @@ const DataTable: FC<Props> = (props) => {
                                     return (
                                         <Fragment key={`session-group-${group.id}`}>
                                             {/* Заголовок группы */}
-                                            <tr key={`session-header-${group.id}`} className="bg-secondary/50">
+                                            <tr key={`session-header-${group.id}`} className={cn("bg-secondary/50", expandedSessions.includes(group.id) && 'border border-primary border-b-0')}>
                                                 <td colSpan={7} className="p-2">
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2">
@@ -402,8 +402,8 @@ const DataTable: FC<Props> = (props) => {
                                             </tr>
                                             
                                             {/* Транзакции группы */}
-                                            {expandedSessions.includes(group.id) && group.transactions.map((row: any) => (
-                                                <tr key={`data-row-${row.id}`} className="bg-secondary/10 odd:bg-secondary/20 border-b">
+                                            {expandedSessions.includes(group.id) && group.transactions.map((row: any, idx: number) => (
+                                                <tr key={`data-row-${row.id}`} className={cn("bg-secondary/10 odd:bg-secondary/20 border-primary", idx === group.transactions.length - 1 ? 'border border-t-0' : 'border-x')}>
                                                     <td className="p-3 text-center">
                                                         <div className="flex justify-center">
                                                             <input
