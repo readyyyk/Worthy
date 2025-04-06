@@ -9,6 +9,8 @@ import { type ReactNode, useState, useEffect } from 'react';
 import { type AppRouter } from '@/server/api/root';
 import { getUrl, transformer } from './shared';
 import { setupPersistentQueryClient, CACHE_CONFIG } from '@/lib/persistQueryClient';
+import { initDB } from '@/lib/indexedDB';
+import { setupSyncEventListeners, processSyncQueue } from '@/lib/syncQueue';
 import { registerServiceWorker } from '@/lib/serviceWorker';
 
 export const api = createTRPCReact<AppRouter>();
@@ -30,11 +32,31 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
     // Настраиваем персистентное хранение кеша
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            // Настраиваем персистентное хранение кеша
-            setupPersistentQueryClient(queryClient);
+            // Инициализируем IndexedDB и настраиваем синхронизацию
+            const initLocalFirst = async () => {
+                try {
+                    // Инициализируем базу данных
+                    await initDB();
+                    
+                    // Настраиваем персистентное хранение кеша
+                    setupPersistentQueryClient(queryClient);
+                    
+                    // Настраиваем обработчики событий для синхронизации
+                    setupSyncEventListeners();
+                    
+                    // Регистрируем Service Worker для PWA
+                    registerServiceWorker();
+                    
+                    // Запускаем синхронизацию, если есть подключение к интернету
+                    if (navigator.onLine) {
+                        void processSyncQueue();
+                    }
+                } catch (error) {
+                    console.error('Ошибка инициализации local-first:', error);
+                }
+            };
             
-            // Регистрируем Service Worker для PWA
-            registerServiceWorker();
+            void initLocalFirst();
         }
     }, [queryClient]);
 

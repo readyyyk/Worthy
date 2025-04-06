@@ -8,7 +8,7 @@
  */
 export const initDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('worthyDB', 1);
+    const request = indexedDB.open('worthyDB', 2); // Увеличиваем версию для миграции
     
     request.onerror = (_event) => {
       reject('Ошибка открытия базы данных');
@@ -19,32 +19,90 @@ export const initDB = (): Promise<IDBDatabase> => {
       resolve(db);
     };
     
-    request.onupgradeneeded = (_event) => {
+    request.onupgradeneeded = (event) => {
       const db = request.result;
+      const oldVersion = event.oldVersion;
       
-      // Хранилище для кешированных транзакций
-      if (!db.objectStoreNames.contains('transactions')) {
-        db.createObjectStore('transactions', { keyPath: 'id' });
+      // Создаем или обновляем хранилища в зависимости от версии
+      if (oldVersion < 1) {
+        // Хранилище для транзакций
+        if (!db.objectStoreNames.contains('transactions')) {
+          const store = db.createObjectStore('transactions', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('updatedAt', 'updatedAt', { unique: false });
+          store.createIndex('isIncome', 'isIncome', { unique: false });
+        }
+        
+        // Хранилище для пользовательских настроек
+        if (!db.objectStoreNames.contains('userSettings')) {
+          db.createObjectStore('userSettings', { keyPath: 'id' });
+        }
+        
+        // Хранилище для шаблонов
+        if (!db.objectStoreNames.contains('templates')) {
+          const store = db.createObjectStore('templates', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+        
+        // Хранилище для кеша запросов
+        if (!db.objectStoreNames.contains('queryCache')) {
+          db.createObjectStore('queryCache', { keyPath: 'id' });
+        }
+        
+        // Хранилище для неотправленных транзакций
+        if (!db.objectStoreNames.contains('pendingTransactions')) {
+          db.createObjectStore('pendingTransactions', { keyPath: 'id' });
+        }
       }
       
-      // Хранилище для пользовательских настроек
-      if (!db.objectStoreNames.contains('userSettings')) {
-        db.createObjectStore('userSettings', { keyPath: 'id' });
-      }
-      
-      // Хранилище для шаблонов
-      if (!db.objectStoreNames.contains('templates')) {
-        db.createObjectStore('templates', { keyPath: 'id' });
-      }
-      
-      // Хранилище для кеша запросов
-      if (!db.objectStoreNames.contains('queryCache')) {
-        db.createObjectStore('queryCache', { keyPath: 'id' });
-      }
-      
-      // Хранилище для неотправленных транзакций
-      if (!db.objectStoreNames.contains('pendingTransactions')) {
-        db.createObjectStore('pendingTransactions', { keyPath: 'id' });
+      // Добавляем новые хранилища для версии 2 (local-first подход)
+      if (oldVersion < 2) {
+        // Хранилище для очереди синхронизации
+        if (!db.objectStoreNames.contains('syncQueue')) {
+          const store = db.createObjectStore('syncQueue', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('status', 'status', { unique: false });
+          store.createIndex('type', 'operation.type', { unique: false });
+        }
+        
+        // Хранилище для сессий покупок
+        if (!db.objectStoreNames.contains('shoppingSessions')) {
+          const store = db.createObjectStore('shoppingSessions', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+        
+        // Хранилище для конфликтов данных
+        if (!db.objectStoreNames.contains('conflicts')) {
+          const store = db.createObjectStore('conflicts', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('storeName', 'storeName', { unique: false });
+        }
+        
+        // Добавляем индексы к существующим хранилищам, если их еще нет
+        if (db.objectStoreNames.contains('transactions')) {
+          const txStore = request.transaction?.objectStore('transactions');
+          if (txStore && !txStore.indexNames.contains('updatedAt')) {
+            txStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+          }
+          if (txStore && !txStore.indexNames.contains('createdAt')) {
+            txStore.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+          if (txStore && !txStore.indexNames.contains('isIncome')) {
+            txStore.createIndex('isIncome', 'isIncome', { unique: false });
+          }
+        }
+        
+        if (db.objectStoreNames.contains('templates')) {
+          const templatesStore = request.transaction?.objectStore('templates');
+          if (templatesStore && !templatesStore.indexNames.contains('updatedAt')) {
+            templatesStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+          }
+          if (templatesStore && !templatesStore.indexNames.contains('createdAt')) {
+            templatesStore.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+        }
       }
     };
   });

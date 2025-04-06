@@ -6,6 +6,8 @@ import { TRPCReactProvider } from '@/trpc/react';
 import type { ReactNode } from 'react';
 import Header from '@/app/header';
 import NextAuthProvider from '@/app/_components/NextAuthProvider';
+import { NetworkStatus } from '@/app/_components/NetworkStatus';
+import { ConflictResolutionDialog } from '@/app/_components/ConflictResolutionDialog';
 
 const font = Ubuntu({
     weight: ['400', '500'],
@@ -27,6 +29,8 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
             <NextAuthProvider>
                 {children}
                 <Header />
+                <NetworkStatus />
+                <ConflictResolutionDialog />
             </NextAuthProvider>
         </TRPCReactProvider>
         </body>

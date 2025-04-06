@@ -2,7 +2,7 @@
 
 import { type FC, useCallback, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import DataTable from '@/app/transactions/data-table';
+import LocalDataTable from '@/app/transactions/local-data-table';
 import SearchBar from '@/app/transactions/search-bar';
 import Pagination from '@/app/transactions/pagination';
 import { Button } from '@/app/_components/ui/button';
@@ -161,6 +161,7 @@ const Page: FC = () => {
         newSearch({ newSessionId: null });
     }, [newSearch]);
 
+
     return (
         <div className="max-w-5xl m-auto">
             <div className="flex justify-between items-center">
@@ -184,7 +185,7 @@ const Page: FC = () => {
                 setStartDate={setStartDate}
                 setEndDate={setEndDate}
             />
-            <DataTable
+            <LocalDataTable
                 startDate={startDate}
                 endDate={endDate}
                 page={page}

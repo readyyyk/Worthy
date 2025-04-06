@@ -34,46 +34,49 @@ const SearchBar: FC<Props> = ({ setDescription,setStartDate, setEndDate, classNa
         initialValue.endDate !== toSetEnd && isValid(eDateInput.current?.value) && (setEndDate(toSetEnd));
     };
 
-    if (typeof window === "undefined") { return <></> }
-    return (<form onSubmit={handleSubmit} className={cn('flex flex-col gap-3', className)}>
-        <div className='flex gap-3'>
-            <Input
-                type="text"
-                placeholder="Search..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-            />
-            <Button
-                size={'icon'}
-                variant={'success'}
-                className="p-2"
-            > <SearchIcon /> </Button>
-        </div>
-        <div className='grid grid-cols-2 gap-3'>
-            <Input
-                type="datetime-local"
-                defaultValue={format(new Date(initialValue.startDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.startDate), 'HH:mm')}
-                ref={sDateInput}
-            />
-            <Input
-                type="datetime-local"
-                defaultValue={initialValue.endDate !== -1 ? format(new Date(initialValue.endDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.endDate), 'HH:mm') : undefined}
-                ref={eDateInput}
-            />
-            <div
-                className={cn(
-                    'bg-red-600 bg-opacity-20 p-4 rounded-xl border-2 border-red-900 col-span-2 text-balance text-center',
-                    localStorage.getItem("ALERT_SINGLE_FILTER") && "hidden"
-                )}
-                onClick={()=>localStorage.setItem("ALERT_SINGLE_FILTER", "1")}
-            >
-                Автор криворучка, поэтому на кнопочку поиска меняется только один из параметров. Чтобы обновить несколько ... *барабанная дробь* ... нужно нажать на кнопочку поиск несколько раз)
-                <hr/>
-                Клик + перезагрузка страницы чтобы убрать
+    // Используем один и тот же рендеринг на сервере и клиенте
+    return (
+        <form onSubmit={handleSubmit} className={cn('flex flex-col gap-3', className)}>
+            <div className='flex gap-3'>
+                <Input
+                    type="text"
+                    placeholder="Search..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                />
+                <Button
+                    size={'icon'}
+                    variant={'success'}
+                    className="p-2"
+                > <SearchIcon /> </Button>
             </div>
-        </div>
-
-    </form>);
+            <div className='grid grid-cols-2 gap-3'>
+                <Input
+                    type="datetime-local"
+                    defaultValue={format(new Date(initialValue.startDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.startDate), 'HH:mm')}
+                    ref={sDateInput}
+                />
+                <Input
+                    type="datetime-local"
+                    defaultValue={initialValue.endDate !== -1 ? format(new Date(initialValue.endDate), 'yyyy-MM-dd') + 'T' + format(new Date(initialValue.endDate), 'HH:mm') : undefined}
+                    ref={eDateInput}
+                />
+                {typeof window !== 'undefined' && (
+                    <div
+                        className={cn(
+                            'bg-red-600 bg-opacity-20 p-4 rounded-xl border-2 border-red-900 col-span-2 text-balance text-center',
+                            localStorage.getItem("ALERT_SINGLE_FILTER") && "hidden"
+                        )}
+                        onClick={()=>localStorage.setItem("ALERT_SINGLE_FILTER", "1")}
+                    >
+                        Автор криворучка, поэтому на кнопочку поиска меняется только один из параметров. Чтобы обновить несколько ... *барабанная дробь* ... нужно нажать на кнопочку поиск несколько раз)
+                        <hr/>
+                        Клик + перезагрузка страницы чтобы убрать
+                    </div>
+                )}
+            </div>
+        </form>
+    );
 };
 
 export default SearchBar;

@@ -114,7 +114,10 @@ self.addEventListener('fetch', (event) => {
 
 // Синхронизация данных при восстановлении соединения
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-transactions') {
+  if (event.tag === 'sync-data') {
+    event.waitUntil(syncData());
+  } else if (event.tag === 'sync-transactions') {
+    // Для обратной совместимости
     event.waitUntil(syncTransactions());
   }
 });
@@ -210,16 +213,32 @@ function deletePendingTransaction(db, id) {
 // Функция для открытия IndexedDB
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('worthyDB', 1);
+    const request = indexedDB.open('worthyDB', 2);
     
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
     
     request.onupgradeneeded = (event) => {
       const db = request.result;
-      // Создаем хранилище для неотправленных транзакций, если его нет
-      if (!db.objectStoreNames.contains('pendingTransactions')) {
-        db.createObjectStore('pendingTransactions', { keyPath: 'id' });
+      const oldVersion = event.oldVersion;
+      
+      // Создаем базовые хранилища для версии 1
+      if (oldVersion < 1) {
+        // Создаем хранилище для неотправленных транзакций, если его нет
+        if (!db.objectStoreNames.contains('pendingTransactions')) {
+          db.createObjectStore('pendingTransactions', { keyPath: 'id' });
+        }
+      }
+      
+      // Добавляем новые хранилища для версии 2
+      if (oldVersion < 2) {
+        // Хранилище для очереди синхронизации
+        if (!db.objectStoreNames.contains('syncQueue')) {
+          const store = db.createObjectStore('syncQueue', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+          store.createIndex('status', 'status', { unique: false });
+          store.createIndex('type', 'operation.type', { unique: false });
+        }
       }
     };
   });
@@ -256,3 +275,233 @@ self.addPendingTransaction = async (transaction) => {
     return false;
   }
 };
+
+// Функция для синхронизации всех данных
+async function syncData() {
+  try {
+    // Открываем базу данных
+    const db = await openDB();
+    
+    // Получаем элементы из очереди синхронизации
+    const syncQueue = await getAllFromStore(db, 'syncQueue');
+    
+    if (!syncQueue || syncQueue.length === 0) {
+      db.close();
+      return;
+    }
+    
+    // Сортируем по времени создания
+    const sortedQueue = [...syncQueue].sort((a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    
+    for (const item of sortedQueue) {
+      if (item.status !== 'pending' && item.status !== 'failed') continue;
+      
+      try {
+        // Обновляем статус
+        item.status = 'processing';
+        item.attempts += 1;
+        await updateInStore(db, 'syncQueue', item);
+        
+        // Выполняем операцию на сервере
+        await syncItemWithServer(item);
+        
+        // Если успешно, удаляем из очереди
+        await deleteFromStore(db, 'syncQueue', item.id);
+      } catch (error) {
+        console.error('Ошибка синхронизации в Service Worker:', error);
+        
+        // Обновляем статус
+        item.status = 'failed';
+        await updateInStore(db, 'syncQueue', item);
+        
+        // Если превышено количество попыток, помечаем как требующее ручного разрешения
+        if (item.attempts >= 5) {
+          item.status = 'manual_resolution_required';
+          await updateInStore(db, 'syncQueue', item);
+        }
+      }
+    }
+    
+    // Закрываем соединение с базой данных
+    db.close();
+  } catch (error) {
+    console.error('Ошибка синхронизации данных:', error);
+  }
+}
+
+// Функция для синхронизации элемента с сервером
+async function syncItemWithServer(queueItem) {
+  const { operation } = queueItem;
+  
+  // Определяем URL и метод в зависимости от типа операции
+  let url = '';
+  let method = 'POST';
+  let body = {};
+  
+  switch (operation.type) {
+    case 'transaction':
+      url = '/api/trpc/transactions.';
+      break;
+    case 'template':
+      url = '/api/trpc/templates.';
+      break;
+    case 'shoppingSession':
+      url = '/api/trpc/shoppingSessions.';
+      break;
+    default:
+      throw new Error(`Неизвестный тип операции: ${operation.type}`);
+  }
+  
+  switch (operation.action) {
+    case 'create':
+      url += 'create';
+      method = 'POST';
+      body = operation.data;
+      break;
+    case 'update':
+      url += 'update';
+      method = 'POST';
+      body = operation.data;
+      break;
+    case 'delete':
+      url += 'delete';
+      method = 'POST';
+      body = { id: operation.id };
+      break;
+    default:
+      throw new Error(`Неизвестное действие: ${operation.action}`);
+  }
+  
+  // Отправляем запрос на сервер
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Ошибка синхронизации: ${response.status} ${response.statusText}`);
+  }
+  
+  // Если это была операция создания, обновляем локальный ID на серверный
+  if (operation.action === 'create' && typeof operation.id === 'string' && operation.id.startsWith('local_')) {
+    const result = await response.json();
+    if (result && result.id) {
+      // Получаем объект из локального хранилища
+      const db = await openDB();
+      const storeName = getStoreNameByType(operation.type);
+      
+      const localItem = await getFromStore(db, storeName, operation.id);
+      
+      if (localItem) {
+        // Удаляем старую запись с локальным ID
+        await deleteFromStore(db, storeName, operation.id);
+        
+        // Создаем новую запись с серверным ID
+        const updatedItem = { ...localItem, id: result.id };
+        await updateInStore(db, storeName, updatedItem);
+      }
+      
+      db.close();
+    }
+  }
+}
+
+// Вспомогательная функция для определения имени хранилища по типу
+function getStoreNameByType(type) {
+  switch (type) {
+    case 'transaction':
+      return 'transactions';
+    case 'template':
+      return 'templates';
+    case 'shoppingSession':
+      return 'shoppingSessions';
+    default:
+      throw new Error(`Неизвестный тип: ${type}`);
+  }
+}
+
+// Вспомогательные функции для работы с IndexedDB
+async function getAllFromStore(db, storeName) {
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction(storeName, 'readonly');
+      const store = transaction.objectStore(storeName);
+      const request = store.getAll();
+      
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function getFromStore(db, storeName, id) {
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction(storeName, 'readonly');
+      const store = transaction.objectStore(storeName);
+      const request = store.get(id);
+      
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function updateInStore(db, storeName, item) {
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction(storeName, 'readwrite');
+      const store = transaction.objectStore(storeName);
+      const request = store.put(item);
+      
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function deleteFromStore(db, storeName, id) {
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction(storeName, 'readwrite');
+      const store = transaction.objectStore(storeName);
+      const request = store.delete(id);
+      
+      request.onsuccess = () => {
+        resolve(true);
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
+  });
+}

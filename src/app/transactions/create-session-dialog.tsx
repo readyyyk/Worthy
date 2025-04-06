@@ -9,7 +9,7 @@ import { api } from '@/trpc/react';
 import { useRouter } from 'next/navigation';
 
 interface Props {
-    transactionIds: number[];
+    transactionIds: (number | string)[];
     open: boolean;
     onClose: () => void;
 }
@@ -27,9 +27,11 @@ export default function CreateSessionDialog({ transactionIds, open, onClose }: P
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // Преобразуем все идентификаторы в числа
+        const numericIds = transactionIds.map(id => typeof id === 'string' ? parseInt(id.replace('local_', '')) : id);
         createSession.mutate({
             name: sessionName || undefined,
-            transactionIds,
+            transactionIds: numericIds,
         });
     };
 
