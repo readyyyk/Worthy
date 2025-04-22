@@ -63,16 +63,20 @@ const Header: FC = ({}) => {
             </HeaderLink>
             
             <button
-                onClick={()=>{
+                onClick={async ()=>{
                     // i'm lazy, so no throttle
-                    if (typeof window !== 'undefined') {
-                        window.localStorage.clear();
-                        setIsDone(true);
-                        setTimeout(()=>setIsDone(false), 2000);
+                    if (typeof window === 'undefined') {
+                        return;
                     }
+                    window.localStorage.clear();
+                    let x = await window.indexedDB.databases();
+                    x.forEach((db) => { window.indexedDB.deleteDatabase(db.name ?? '') });
+                    location.reload();
+                    setIsDone(true);
+                    setTimeout(()=>setIsDone(false), 1400);
                 }}
                 className={cn(
-                    'transition rounded-full bg-background aspect-square h-full w-auto grid place-items-center p-1 shadow shadow-transparent hover:shadow-white transition',
+                    'transition rounded-full bg-background aspect-square h-full w-auto grid place-items-center p-1 shadow shadow-transparent hover:shadow-white',
                     isDone ? 'bg-emerald-600' : 'bg-background',
                 )}
             >
